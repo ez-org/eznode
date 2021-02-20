@@ -1,0 +1,5 @@
+#!/bin/bash
+source /ez/util.sh
+
+# Logging to file is handled by bitcoind
+log_prefix bitcoind

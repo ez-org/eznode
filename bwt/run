@@ -1,0 +1,57 @@
+#!/bin/bash
+set -eo pipefail
+source /ez/util.sh
+
+bool_opt "$BWT" || abort_service
+wait_for_bitcoind
+
+# General config
+export ELECTRUM_ADDR=$BIND_ADDR:50001
+export HTTP_ADDR=$BIND_ADDR:3060
+export NO_REQUIRE_ADDRESSES=1
+export NOTIFY_FD=5
+export RUST_LOG_STYLE=always
+
+# Enable real-time updates using unix socket notifications when bitcoind is running locally
+# Also see init.sh and https://github.com/bwt-dev/bwt#real-time-indexing
+if [ "$BITCOIND_MODE" == "local" ]; then
+  mkdir -p /run/bwt && chown bwt /run/bwt
+  export UNIX_LISTENER_PATH=/run/bwt/notify-socket
+  export UNIX_LISTENER_MODE=511 # 777 in octal
+  export POLL_INTERVAL=${POLL_INTERVAL:-90} # seconds
+fi
+
+# Disable historical rescan and merkle proofs when pruning is enabled
+if [ -n "$PRUNE" ] && [ "$PRUNE" != "0" ]; then
+  export RESCAN_SINCE=${RESCAN_SINCE:-now}
+  export ELECTRUM_SKIP_MERKLE=${ELECTRUM_SKIP_MERKLE:-1}
+fi
+
+# Create an 'ez-bwt' wallet by default
+if [ -z "$BITCOIND_WALLET" ]; then
+  export BITCOIND_WALLET=ez-bwt
+  export CREATE_WALLET_IF_MISSING=1
+fi
+
+# Configure standalone addresses to track
+if [ -f /data/watch-addresses.txt ]; then
+  cp /data/watch-addresses.txt /home/bwt/ && chown bwt /home/bwt/watch-addresses.txt
+  export ADDRESSES_FILE=/home/bwt/watch-addresses.txt
+fi
+
+# Suppress bwt's default startup banner and display it on our own,
+# with a slight delay and some modifications
+if [ -z "$NO_STARTUP_BANNER" ]; then
+  export NO_STARTUP_BANNER=1
+  (do_once bwt-banner && wait_for_service bwt 0 && sleep 1 && banner -s &) 1>&2
+fi
+
+# Restart bwt whenever bitcoind is restarted, so it'll pick up the new cookie
+(do_once bwt-restart-job && while :; do
+  s6-svwait -d /run/s6/services/bitcoind
+  [ "$(svstat bwt up,wantedup)" == "true true" ] && service restart bwt
+done &) &> /dev/null
+
+# Start
+info bwt Starting Bitcoin Wallet Tracker...
+exec s6-setuidgid bwt bwt $BWT_OPTS 2>&1

@@ -1,0 +1,3 @@
+/var/log/letsencrypt true www-data 0600 0700
+/var/lib/letsencrypt true www-data 0600 0700
+/data/nginx-ssl/letsencrypt true www-data 0600 0700

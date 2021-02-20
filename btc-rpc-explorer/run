@@ -1,0 +1,50 @@
+#!/bin/bash
+set -eo pipefail
+source /ez/util.sh
+
+bool_opt "$EXPLORER" || abort_service
+wait_for_bitcoind
+
+export HOME=/home/btcexp
+export PATH=$HOME/node/bin:$PATH
+
+# General config
+export BTCEXP_HOST=$BIND_ADDR
+export BTCEXP_PORT=3002
+export BTCEXP_BASEURL=/explorer/
+export BTCEXP_PRIVACY_MODE=${BTCEXP_PRIVACY_MODE:-true}
+export BTCEXP_NO_INMEMORY_RPC_CACHE=${BTCEXP_NO_INMEMORY_RPC_CACHE:-true}
+export BTCEXP_BITCOIND_RPC_TIMEOUT=20000
+export DEBUG=${BTCEXP_DEBUG:-'btcexp:*,electrumClient,-btcexp:config'} DEBUG_COLORS=1
+export NODE_ENV=production
+
+[ -n "$AUTH_TOKEN" ] && export BTCEXP_BASIC_AUTH_PASSWORD=$AUTH_TOKEN
+
+# Bitcoin Core RPC config
+export BTCEXP_BITCOIND_URI=$BITCOIND_URL
+export BTCEXP_BITCOIND_COOKIE=$BITCOIND_NETDIR/.cookie
+export BTCEXP_BITCOIND_USER=$BITCOIND_AUTH_USER
+export BTCEXP_BITCOIND_PASS=$BITCOIND_AUTH_PASS
+
+# Connect with the BWT Electrum server to enable exploring wallet addresses
+if bool_opt "$BWT" && [ -z "$BTCEXP_ELECTRUMX_SERVERS" ]; then
+  if wait_for_service bwt 15000; then
+    export BTCEXP_ADDRESS_API=electrumx
+    export BTCEXP_ELECTRUMX_SERVERS=tcp://$BIND_ADDR:50001
+  else
+    debug explorer The BWT Electrum server is taking too long, continuing without it
+    # Restart btc-rpc-explorer when BWT is ready
+    (do_once explorer-wait-bwt && wait_for_service bwt 0 && service restart btc-rpc-explorer &) > /dev/null
+  fi
+fi
+
+# Display a few important log messages only when EXPLORER_LOGS is disabled
+(bool_opt "$EXPLORER_LOGS" || (pfile=$(mktemp) && pidfile $pfile timeout 1m \
+  tail -F -n0 /var/log/btc-rpc-explorer/current 2> /dev/null \
+  | sed -unr 's/^\S+ \S+\s+\S+ | \S+$|, parsed.*//g; /Error/Ip; /Starting|Connected/p; /RPC Connected:/q' \
+  | { while read m; do info explorer $m; done; killpidf $pfile; } &)) 1>&2
+
+# Start
+signal_readiness
+debug explorer Starting btc-rpc-explorer with config: $(env | grep ^BTCEXP_ | sed 's/^BTCEXP_//')
+exec s6-setuidgid btcexp node ~/dist/bin/www 2>&1

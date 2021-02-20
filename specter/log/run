@@ -1,0 +1,13 @@
+#!/bin/bash
+source /ez/util.sh
+
+# Disable log timestamps, specter already outputs it
+export S6_LOGGING_SCRIPT="n20 s1000000"
+
+if bool_opt "$SPECTER_LOGS"; then
+  # Log to file and STDOUT
+  tee >(logutil-service /var/log/specter) | log_prefix specter
+else
+  # Log to file only
+  exec logutil-service /var/log/specter
+fi

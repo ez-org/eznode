@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# compress /important to STDOUT, follow symlinks, use absolute paths, hide missing symlinks warnings.
+# the --transform is needed to avoid having a top level '.' directory.
+exec tar czvhf - --warning=no-file-removed --transform s:'^.':: -C /important .

@@ -1,0 +1,2 @@
+/data/tor-hsv true debian-tor 0700 0700
+/etc/tor/torrc false debian-tor 0700 0700

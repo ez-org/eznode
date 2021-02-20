@@ -1,0 +1,5 @@
+#!/bin/bash
+source /ez/util.sh
+
+# Logging to file is handled by the NGINX daemon
+log_prefix nginx

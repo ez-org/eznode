@@ -1,0 +1,12 @@
+#!/bin/bash
+set -eo pipefail
+source /ez/util.sh
+
+if bool_opt "$BWT_LOGS"; then
+  # Log to file and STDOUT (minus one unnecessary msg)
+  tee >(exec logutil-service /var/log/bwt) \
+  | grep -v 'bwt::http.*"GET /banner.txt '
+else
+  # Log to file only
+  exec logutil-service /var/log/bwt
+fi

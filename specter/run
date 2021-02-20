@@ -1,0 +1,45 @@
+#!/bin/bash
+set -eo pipefail
+source /ez/util.sh
+
+bool_opt "$SPECTER" || abort_service
+
+if [ "$EUID" -eq 0 ]; then
+  wait_for_bitcoind
+  mkdir -p /data/specter && chown specter:specter /data/specter
+  # Drop permissions for the rest of the script in a new shell
+  exec s6-setuidgid specter $0
+fi
+
+export HOME=/home/specter
+export PATH=~/.local/bin:$PATH
+export LC_ALL=C.UTF-8
+export LANG=C.UTF-8
+
+[ -f /data/specter/config.json ] || cp ~/.specter/config.json /data/specter/
+
+# Update JSON config files with the Bitcoin Core RPC details
+IFS=':' read host port <<< $(cut -d'/' -f3 <<< $BITCOIND_URL)
+cat <<< $(jq --arg dir "$BITCOIND_DIR" --arg host "$host" --arg port "$port" --arg user "$BITCOIND_AUTH_USER" --arg pass "$BITCONID_AUTH_PASS" \
+          '.rpc.datadir=$dir | .rpc.host=$host | .rpc.port=$port | .rpc.user=$user | .rpc.password=$pass' /data/specter/config.json) \
+  > /data/specter/config.json
+
+# Use AUTH_TOKEN as the admin password
+if [ -n "$AUTH_TOKEN" ]; then
+  pwd_json=$(python3 -c 'from cryptoadvance.specter.user import hash_password; import sys, json; print(json.dumps(hash_password(sys.argv[1])));' "$AUTH_TOKEN")
+  cat <<< $(jq --argjson pwd "$pwd_json" '.[0].password=$pwd' ~/.specter/users.json) \
+    > /data/specter/users.json
+  cat <<< $(jq '.auth.method="passwordonly"' /data/specter/config.json) \
+    > /data/specter/config.json
+fi
+
+# Display some important log messages only when SPECTER_LOGS is disabled
+(bool_opt "$SPECTER_LOGS" || (pfile=$(mktemp) && pidfile $pfile timeout 20s \
+  tail -F -n0 /var/log/specter/current 2> /dev/null \
+  | sed -unr '/Error/Ip; /\* Running on/{s/.*\* |\(.*//g;p;q}' \
+  | { while read m; do info specter $m; done; killpidf $pfile; } &)) 1>&2
+
+# Start
+signal_readiness
+info specter Starting Specter server..
+exec python3.7 -m cryptoadvance.specter server --specter-data-folder /data/specter --host $BIND_ADDR 2>&1

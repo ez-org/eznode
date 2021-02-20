@@ -1,0 +1,40 @@
+#!/bin/bash
+source /ez/util.sh
+
+cat << CFG
+DataDirectory /var/lib/tor
+ControlSocket /var/lib/tor/control_socket
+
+HiddenServiceDir /data/tor-hsv
+HiddenServiceVersion 3
+
+# Bitcoin Wallet Tracker
+HiddenServicePort 50001 $BIND_ADDR:50001
+HiddenServicePort 50002 $BIND_ADDR:50002
+HiddenServicePort 3060 $BIND_ADDR:3060
+
+# Bitcoin Core RPC
+$(bool_opt "$BITCOIND_RPC_ONION" && echo \
+  HiddenServicePort $BITCOIND_RPC_PORT 127.0.0.1:$BITCOIND_RPC_PORT)
+
+# Specter
+HiddenServicePort 25441 $BIND_ADDR:25441
+
+# btc-rpc-explorer
+HiddenServicePort 3002 $BIND_ADDR:3002
+
+
+Log notice file /var/log/tor/tor.log
+$(bool_opt "$TOR_LOGS" && echo "Log notice stdout")
+
+$TOR_CONFIG
+CFG
+
+if bool_opt "$TOR_NONANONYMOUS"; then
+  warn tor "Tor Hidden Service configured to run in NON-ANONYMOUS mode. It will not provide anonymity to the server's IP address."
+  echo "
+  HiddenServiceNonAnonymousMode 1
+  HiddenServiceSingleHopMode 1
+  SocksPort 0
+  "
+fi

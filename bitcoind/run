@@ -1,0 +1,91 @@
+#!/bin/bash
+set -eo pipefail
+source /ez/util.sh
+
+# Use external Bitcoin Core node
+if [ "$BITCOIND_MODE" == "remote" ]; then
+  # Cookie authentication
+  if [ -d /bitcoin ]; then
+    # Copy externally mounted cookie files into a directory readable by the 'bitcoin' user
+    mkdir -p /ext_bitcoin
+    (cd /bitcoin && cp --parents .$(bitcoind_net_dir $NETWORK)/.cookie /ext_bitcoin) \
+      || error bitcoind Cannot find cookie file in mounted datadir
+    chown -R bitcoin:bitcoin /ext_bitcoin && chmod -R 550 /ext_bitcoin
+    rpcargs="-datadir=/ext_bitcoin"
+
+  # Username/password authentication
+  elif [ -n "$BITCOIND_AUTH" ]; then
+    rpcargs="-rpcuser=$BITCOIND_AUTH_USER -rpcpassword=$BITCOIND_AUTH_PASS"
+
+  else error bitcoind BITCOIND_URL was specified, but the /bitcoin datadir was not mounted and BITCOIND_AUTH was not set
+  fi
+
+  info bitcoind Using external Bitcoin Core node at $BITCOIND_URL
+
+  # Test connection
+  info -n bitcoind 'Testing connectivity... '
+  rpcargs="$rpcargs -rpcconnect=$(cut -d'/' -f3 <<< $BITCOIND_URL)"
+  s6-setuidgid bitcoin bitcoin-cli $rpcargs -rpcwait uptime > /dev/null
+  echo >&2 connected.
+
+  # Signal readiness, then abort the service. We don't need it running for external nodes.
+  signal_readiness
+  abort_service
+fi
+
+
+if [ "$EUID" -eq 0 ]; then
+  mkdir -p /data/{bitcoin,fastsync}
+  chown bitcoin /data/{bitcoin,fastsync}
+  echo $BITCOIND_NETDIR/debug.log > log/location
+
+  # Drop permissions for the rest of the script in a new shell
+  exec s6-setuidgid bitcoin $0
+fi
+
+# Configuration options. A config file can also be mounted into /data/bitcoin/bitcoin.conf
+[ "$NETWORK" == "regtest" ] && : ${PRUNE:=0} ${TXINDEX:=1}
+: ${PRUNE:=550}
+: ${BITCOIND_LISTEN:=0}
+! bool_opt "$BITCOIND_TOR" || bool_opt "$TOR" || error bitcoind BITCOIND_TOR requires TOR to be enabled
+
+BITCOIND_OPTS="$BITCOIND_OPTS -datadir=$BITCOIND_DIR -chain=$BITCOIND_CHAIN
+  -prune="$PRUNE" -listen="$BITCOIND_LISTEN"
+  $([ -n "$TXINDEX" ] && echo "-txindex=$TXINDEX")
+  $([ "$NETWORK" == "regtest" ] && echo "-fallbackfee=0.00001")
+  $(bool_opt "$BITCOIND_TOR" && echo "-proxy=127.0.0.1:9050")
+  $(bool_opt "$BITCOIND_LOGS" || echo "-printtoconsole=0")"
+
+# Sync from trusted snapshot (prunednode.today)
+bool_opt "$TRUSTED_FASTSYNC" && source fastsync/fastsync.sh
+
+# Create 'wallets' subdirectory so bitcoind uses it as the -walletdir and groups wallets under it.
+# This makes it easier to back them up.
+mkdir -p $BITCOIND_NETDIR/wallets
+
+# Spawn background subshell to signal readiness and run some post-initialization code
+((
+  # Wait for the RPC to warm up and test connectivity
+  bitcoin-cli -rpcwait uptime > /dev/null # TODO timeout
+  info bitcoind The Bitcoin Core RPC is ready
+  chmod g+r $BITCOIND_NETDIR/.cookie
+
+  if [ "$NETWORK" == "regtest" ] && [ "$(bitcoin-cli getblockcount)" -eq 0 ]; then
+    info bitcoind Mining some regtest blocks
+    bitcoin-cli createwallet miner > /dev/null
+    bitcoin-cli generatetoaddress 101 $(bitcoin-cli -rpcwallet=miner getnewaddress) > /dev/null
+  fi
+
+  signal_readiness
+) &) 1>&2
+
+# Display a few important log messages only when BITCOIND_LOGS is disabled
+(bool_opt "$BITCOIND_LOGS" || (pfile=$(mktemp) && pidfile $pfile timeout 1h \
+  tail -F -n0 $BITCOIND_NETDIR/debug.log 2> /dev/null \
+  | sed -urn 's/^\S+ //g; /^Bitcoin Core version|^Loaded best chain|^Verifying last/p; /^init message: Done/{p;q}' \
+  | { while read m; do info bitcoind $m; done; killpidf $pfile; } &)) 1>&2
+
+# Start
+info bitcoind Starting Bitcoin Core...
+debug bitcoind Config options: $BITCOIND_OPTS
+exec bitcoind $BITCOIND_OPTS 2>&1

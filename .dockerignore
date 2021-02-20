@@ -1,0 +1,7 @@
+Dockerfile
+README.md
+docs
+docker/*.env
+docker/build-arch.sh
+docker/release.sh
+.git

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# bitcoin-cli wrapper with automatic -datadir and -chain
+exec /usr/local/bin/bitcoin-cli -datadir=/data/bitcoin -chain="$(printcontenv BITCOIND_CHAIN)" "$@"

@@ -1,0 +1,20 @@
+#!/bin/bash
+set -eo pipefail
+source /ez/util.sh
+
+if [ "$(svstat bwt up)" != "true" ]; then
+  echo -n 'echo >&2 Error: Bitcoin Wallet Tracker is not running'
+  exit 1
+fi
+
+if [ "$(svstat bwt ready)" != "true" ]; then
+  echo -n 'echo >&2 Bitcoin Wallet Tracker is still starting up... configuring anyway. && '
+fi
+
+host=$(printcontenv HOST_ALIAS || printcontenv BIND_ADDR)
+
+tr '\n' ' ' << CFG
+electrum setconfig server $host:50001:t &&
+electrum setconfig oneserver true &&
+electrum setconfig skipmerklecheck true
+CFG

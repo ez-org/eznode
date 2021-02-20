@@ -1,0 +1,4 @@
+/etc/nginx true www-data 0600 0700
+/var/lib/nginx true www-data 0600 0700
+/run/nginx true www-data 0600 0700
+/data/nginx-ssl true www-data 0600 0700

@@ -1,0 +1,52 @@
+before_script:
+  - docker build -t eznode .
+
+script: |
+  exec sudo bash -eo pipefail << 'SHELL'
+    shopt -s expand_aliases
+    alias ez='docker exec ez'
+    xpub=tpubD6NzVbkrYhZ4X9SErApTtvF833DCUydyjhVyWiciPXmqC6pzngB6EyhUnnqJvhXgJmHj3bkWdcSjkD4FsysLWsAZ1nJNdjV7CJfHBFu66C8
+
+    echo Starting up eznode...
+    docker run -t --name ez -h ez -v /tmp/ezdata:/data -v /etc/hosts:/ez/hosts eznode \
+      NETWORK=regtest XPUB=$xpub VERBOSE=1 NO_STARTUP_BANNER=1 \
+      SPECTER=1 SSL=1 SSHD=1 TOR=1 TOR_CONFIG='SocksPort 0.0.0.0:9050' &
+
+    echo Waiting for bitcoind/bwt to come up...
+    sleep 2
+    ez s6-svwait -U /run/s6/services/{bitcoind,bwt}
+    echo "$(ez status)"
+
+    echo Testing bitcoind and bwt...
+    addr=$(curl -fsS -L ez:3060/wallet/ju9npsex/next | jq -er .address)
+    txid=$(ez bitcoin-cli -rpcwallet=miner sendtoaddress $addr 1.234)
+    sleep 3
+    [ $(curl -fsS ez:3060/tx/$txid | jq -er .balance_change) -eq 123400000 ]
+    [ $(curl -fsS ez:3060/address/$addr/stats | jq -er .unconfirmed_balance) -eq 123400000 ]
+    echo ok
+
+    echo Testing specter...
+    echo "$(curl -fsS ez:25441/about)" | grep -q '<img src="/static/img/checkbox-tick.svg" width="30px">'
+    # checkbox-tick indicates a successful connection to bitcoin core
+    echo ok
+
+    echo Testing btc-rpc-explorer...
+    echo "$(curl -fsS ez:3002/explorer/node-status)" | grep -q '<span class="text-success">Synchronized with network</span>'
+    echo ok
+
+    echo Testing SSH...
+    ssh -i /tmp/ezdata/ssh-keys/client_rsa -o 'StrictHostKeyChecking no' \
+      -fTN -L 127.0.0.1:3061:ez:3060 -p 2222 root@ez
+    curl -fsS -m 2 localhost:3061/tx/$txid > /dev/null
+    echo ok
+
+    echo Testing SSL...
+    curl -fsS -m 2 -k https://ez:3443/bwt/tx/$txid > /dev/null
+    echo ok
+
+    echo Testing Tor...
+    onion=$(cat /tmp/ezdata/tor-hsv/hostname)
+    curl -fsS -m 60 -x socks5h://ez:9050 http://$onion:3060/tx/$txid > /dev/null
+    echo ok
+  SHELL
+  ;

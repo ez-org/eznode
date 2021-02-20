@@ -1,0 +1,10 @@
+#!/bin/bash
+source /ez/util.sh
+
+if bool_opt "$SSHD_LOGS"; then
+  # Log to file and STDOUT
+  tee >(logutil-service /var/log/dropbear) | log_prefix dropbear
+else
+  # Log to file only
+  exec logutil-service /var/log/dropbear
+fi

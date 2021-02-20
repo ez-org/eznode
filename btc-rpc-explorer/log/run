@@ -1,0 +1,10 @@
+#!/bin/bash
+source /ez/util.sh
+
+if bool_opt "$EXPLORER_LOGS"; then
+  # Log to file and STDOUT
+  tee >(exec logutil-service /var/log/btc-rpc-explorer)
+else
+  # Log to file only
+  exec logutil-service /var/log/btc-rpc-explorer
+fi

@@ -1,0 +1,29 @@
+#!/bin/bash
+set -eo pipefail
+source /ez/util.sh
+
+bool_opt "$SSL" || [ -n "$SSL_DOMAIN" ] || abort_service
+[ -z "$SSL_DOMAIN" ] || [ -d /run/s6/services/letsencrypt ] || error ssl CA-signed SSL requires letsencrypt to be installed
+
+if [ "$EUID" -eq 0 ]; then
+  wait_for_bitcoind
+  mkdir -p /data/nginx-ssl && chown www-data /data/nginx-ssl && chmod 700 /data/nginx-ssl
+
+  # Drop permissions for the rest of the script in a new shell
+  exec s6-setuidgid www-data $0
+fi
+
+# Prepare self-signed certificate
+[ -z "$SSL_DOMAIN" ] && source selfsigned.sh
+# LetsEncrypt certificates are handled by a separate service when SSL_DOMAIN is set
+
+# Generate htpasswd
+[ -n "$AUTH_TOKEN" ] && echo "satoshi:$(openssl passwd -5 "$AUTH_TOKEN")" > /etc/nginx/htpasswd
+
+# Generate config
+./nginx.conf.tmpl > /etc/nginx/nginx.conf
+
+# Start nginx
+info ssl "Starting NGINX reverse SSL proxy on $BIND_ADDR (ports 3443/8080/50002)"
+signal_readiness
+exec nginx -g "daemon off;" 2>&1

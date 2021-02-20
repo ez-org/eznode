@@ -1,0 +1,11 @@
+#!/bin/bash
+set -oe pipefail
+source /ez/util.sh
+source /ez/default-finish.sh
+
+# If an error was encountered, wait for awhile before trying again to avoid hitting LetsEncrypt's rate limits.
+# Preventing the s6 supervisor from killing `finish` after 5 seconds requires the `timeout-finish` config file.
+if [ $1 -ne 0 ] && [ $1 -ne 256 ]; then
+  warn letsencrypt Failed obtaining certificate. Restart with LETSENCRYPT_LOGS=1 to see more details. Waiting for 5 minutes before trying again.
+  sleep 5m
+fi
