@@ -47,7 +47,7 @@ if [ -z "$NO_STARTUP_BANNER" ]; then
 fi
 
 # Restart bwt whenever bitcoind is restarted, so it'll pick up the new cookie
-(do_once bwt-restart-job && while :; do
+([ "$BITCOIND_MODE" == "local" ] && do_once bwt-restart-job && while :; do
   s6-svwait -d /run/s6/services/bitcoind
   [ "$(svstat bwt up,wantedup)" == "true true" ] && service restart bwt
 done &) &> /dev/null

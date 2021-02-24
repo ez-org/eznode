@@ -42,6 +42,14 @@ export BITCOIND_DIR=$([ $BITCOIND_MODE == "local" ] && echo /data/bitcoin || ([ 
 export BITCOIND_RPC_PORT=$(bitcoind_rpc_port $NETWORK)
 [ -n "$BITCOIND_DIR" ] && export BITCOIND_NETDIR=$BITCOIND_DIR$(bitcoind_net_dir $NETWORK)
 
+# Open up the bitcoind rpc for remote access with the given user/pwd
+if [ -n "$BITCOIND_RPC_ACCESS" ]; then
+  grep -q ':' <<< $BITCOIND_RPC_ACCESS || error bitcoind 'BITCOIND_RPC_ACCESS expected in <username>:<password> format'
+  [ -n "$DOCKER_HOST_IP" ] || warn bitcoind "BITCOIND_RPC_ACCESS was enabled, but the host's IP cannot be detected." \
+      "Start with '--add-host host.docker.internal:host-gateway' or manually whitelist it with BITCOIND_OPTS='-rpcallowip=<ip>'."
+  export BITCOIND_AUTH=$BITCOIND_RPC_ACCESS
+fi
+
 # Some programs prefer the username/password as separate options
 if [ -n "$BITCOIND_AUTH" ]; then
   IFS=':' read BITCOIND_AUTH_USER BITCOIND_AUTH_PASS <<< "$BITCOIND_AUTH"
@@ -50,14 +58,13 @@ fi
 
 # Set the default BITCOIND_URL
 if [ -z "$BITCOIND_URL" ]; then
-  # Use host.docker.internal as the default remote bitcoind URL if it resolves (the host's IP address).
+  # Use the host's IP address (if available) as the default remote bitcoind URL.
   # Requires running with `docker start --add-host host.docker.internal:host-gateway`
-  if [ $BITCOIND_MODE == "remote" ] && getent hosts host.docker.internal > /dev/null; then
+  if [ $BITCOIND_MODE == "remote" ] && [ -n "$DOCKER_HOST_IP" ]; then
     export BITCOIND_URL=http://host.docker.internal:$BITCOIND_RPC_PORT/
-    host_ip=$(getent hosts host.docker.internal | cut -d' ' -f1)
-    net_range=$(cut -d'.' -f1-3 <<< $host_ip).0/24
-    info bitcoind "Docker virtual network detected, connecting to host at host.docker.internal ($host_ip)"
-    info bitcoind "You will need to configure your node with 'rpcbind=$host_ip' and 'rpcallowip=$net_range'," \
+    net_range=$(cut -d'.' -f1-3 <<< $DOCKER_HOST_IP).0/24
+    info bitcoind "Docker virtual network detected, connecting to host at host.docker.internal ($DOCKER_HOST_IP)"
+    info bitcoind "You will need to configure your node with 'rpcbind=$DOCKER_HOST_IP' and 'rpcallowip=$net_range'," \
                   "and loosen your firewall (if any) with e.g. 'ufw allow from $net_range to any port $BITCOIND_RPC_PORT'"
 
   # Use the local bitcoind running inside the container, or possibly on the host if `--net host` was used

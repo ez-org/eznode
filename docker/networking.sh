@@ -1,5 +1,7 @@
 # -- expected to be `source`ed
 
+export DOCKER_HOST_IP=$(getent hosts host.docker.internal | cut -d' ' -f1 2> /dev/null || return 0)
+
 # Detect Docker on macOS. It behaves differently:
 # https://docs.docker.com/docker-for-mac/networking/#known-limitations-use-cases-and-workarounds
 IS_MACOS=$(uname -r | grep -Eq -- '-moby$|-linuxkit($|-)' && echo 1 || return 0)

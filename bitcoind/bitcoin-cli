@@ -1,4 +1,12 @@
 #!/bin/bash
 
-# bitcoin-cli wrapper with automatic -datadir and -chain
-exec /usr/local/bin/bitcoin-cli -datadir=/data/bitcoin -chain="$(printcontenv BITCOIND_CHAIN)" "$@"
+# bitcoin-cli wrapper with automatic datadir/auth/chain configuration
+
+printcontenv BITCOIND_AUTH > /dev/null && \
+  authargs="-rpcuser=$(printcontenv BITCOIND_AUTH_USER) -rpcpassword=$(printcontenv BITCOIND_AUTH_PASS)"
+
+BITCOIND_DIR=$(printcontenv BITCOIND_DIR || return 0)
+# workaround for https://github.com/bitcoin/bitcoin/issues/21295
+[ -z "$BITCOIND_DIR" ] && { BITCOIND_DIR=/tmp/.bitcoin; mkdir -p $BITCOIND_DIR; }
+
+exec /usr/local/bin/bitcoin-cli -datadir="$BITCOIND_DIR" -chain="$(printcontenv BITCOIND_CHAIN)" $authargs "$@"

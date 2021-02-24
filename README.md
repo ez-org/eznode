@@ -77,7 +77,7 @@ eznode is pruned by default with prune=550. It'll take up a total of ~4.8GB incl
 
 A pruned node can only scan the recent blocks it still has available for transactions related to your wallet. This makes it primarily suitable for newly created wallets.
 
-If you'd like to use an existing wallet, you'll need to scan for historical transactions by setting `RESCAN_DATE=<yyyy-mm-dd>` to the wallet creation time (err on the too early side) and disable pruning with `PRUNE=0` (or increasing it enough to include the rescan date). You may enable pruning after scanning is completed.
+If you'd like to use an existing wallet, you'll need to scan for historical transactions by setting `RESCAN_DATE=<yyyy-mm-dd>` to the wallet creation time (err on the too early side) and disable pruning with `PRUNE=0` (or increase it enough to include the rescan date). You may enable pruning after scanning is completed.
 
 ## ⚙️ Configuration
 
@@ -219,12 +219,28 @@ If your node is running remotely, you can configure its URL and RPC credentials 
 
 </details>
 
+#### Accessing managed full node
+
+<details>
+ <summary>Expand instructions...</summary><br>
+
+If you'd like to access eznode's managed Bitcoin Core instance from your host, set `BITCOIND_RPC_ACCESS=<user:pwd>` to enable password authentication and `--add-host` so it can automatically whitelist the host's IP address (with `-rpcallowip`):
+
+```bash
+$ docker run -v --add-host host.docker.internal:host-gateway -it ... eznode/eznode BITCOIND_RPC_ACCESS=satoshi:mySecretPassword
+```
+
+If you'd like to access it remotely, set `BITCOIND_RPC_ONION` to expose it through an [onion service](#tor) or setup an [SSH tunnel](#dropbear).
+
+</details>
+
 #### Options (for managed bitcoind)
 - `PRUNE=550` (set to `0` to disable pruning)
 - `TXINDEX=0` (enabling this requires pruning to be disabled)
 - `BITCOIND_LISTEN=0` (accept incoming connections on the bitcoin p2p network)
 - `BITCOIND_TOR=0` (connect to the bitcoin network through tor)
-- `BITCOIND_RPC_ONION=0` (expose the bitcoind rpc port over onion)
+- `BITCOIND_RPC_ACCESS` (expose the bitcoind rpc)
+- `BITCOIND_RPC_ONION=0` (expose the bitcoind rpc over onion)
 - `BITCOIND_OPTS=<none>` (custom cli options for bitcoind)
 - `BITCOIND_LOGS=0` (display bitcoind's logs in the `docker run` output)
 
@@ -277,7 +293,7 @@ If you're connecting remotely, you'll need to setup [Tor Onion or SSH](#-connect
 - `XPUB`/`XPUB_*` (xpubs/ypubs/zpubs to track)
 - `DESCRIPTOR`/`DESCRIPTOR_*`/`DESC_*` (output script descriptors to track)
 - `RESCAN_SINCE=now` (date to begin rescanning for historical wallet transactions in `YYYY-MM-DD` format. By default, only new transactions will be visible.)
-- `BITCOIND_WALLET=bwt` (bitcoind wallet to use)
+- `BITCOIND_WALLET=ez-bwt` (bitcoind wallet to use)
 - `CREATE_WALLET_IF_MISSING=1` (automatically create a new bitcoind wallet)
 - `GAP_LIMIT=20` (the gap limit for address import)
 - `FORCE_RESCAN=0` (force rescanning for historical transactions, even if the addresses were already previously imported)
@@ -656,24 +672,20 @@ $ docker run -it ... eznode ...
 
 All the files retrieved during the build are verified by their hash.
 
-To build the ARM32v7/ARM64v8 images, use `./docker/build-arch.sh [arm|arm64]`.
+To build the ARM32v7/ARM64v8 images, run `$ ./docker/build-arch.sh [arm|arm64] -t eznode`. Cross-compilation requires [qemu-user-static](https://github.com/multiarch/qemu-user-static) to be installed.
 
 You can upgrade third-party packages yourself by setting the following `--build-arg`s: `BITCOIND_{VERSION,SHA256}`, `BWT_{VERSION,SHA256}`, `BTCEXP_{VERSION,SHA256}` and `SPECTER_{VERSION,SHA256}`.
 
 # 🔏 Signed images
 
-Signed image digests are available in [`SHA256SUMS.asc`](https://github.com/ez-org/eznode/blob/master/SHA256SUMS.asc).
+Signed docker image digests are available in [`SHA256SUMS.asc`](https://github.com/ez-org/eznode/blob/master/SHA256SUMS.asc).
 
 The images are signed by Nadav Ivgi (@shesek). The public key can be verified on the [PGP WoT](http://keys.gnupg.net/pks/lookup?op=vindex&fingerprint=on&search=0x81F6104CD0F150FC), [github](https://api.github.com/users/shesek/gpg_keys), [twitter](https://twitter.com/shesek), [keybase](https://keybase.io/nadav), [hacker news](https://news.ycombinator.com/user?id=nadaviv) and [this video presentation](https://youtu.be/SXJaN2T3M10?t=4).
 
 ```bash
-# Download signature file
-$ wget https://raw.githubusercontent.com/ez-org/eznode/latest/SHA256SUMS.asc
-
-# Fetch public key
-$ gpg --keyserver keyserver.ubuntu.com --recv-keys FCF19B67866562F08A43AAD681F6104CD0F150FC
-
 # Verify signature
+$ wget https://raw.githubusercontent.com/ez-org/eznode/latest/SHA256SUMS.asc
+$ gpg --keyserver keyserver.ubuntu.com --recv-keys FCF19B67866562F08A43AAD681F6104CD0F150FC
 $ gpg --verify SHA256SUMS.asc
 
 # Fetch docker image by hash and give it a local alias

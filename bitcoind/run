@@ -4,28 +4,19 @@ source /ez/util.sh
 
 # Use external Bitcoin Core node
 if [ "$BITCOIND_MODE" == "remote" ]; then
-  # Cookie authentication
+  # Copy externally mounted cookie files into a directory readable by the 'bitcoin' user
   if [ -d /bitcoin ]; then
-    # Copy externally mounted cookie files into a directory readable by the 'bitcoin' user
     mkdir -p /ext_bitcoin
     (cd /bitcoin && cp --parents .$(bitcoind_net_dir $NETWORK)/.cookie /ext_bitcoin) \
       || error bitcoind Cannot find cookie file in mounted datadir
     chown -R bitcoin:bitcoin /ext_bitcoin && chmod -R 550 /ext_bitcoin
-    rpcargs="-datadir=/ext_bitcoin"
-
-  # Username/password authentication
-  elif [ -n "$BITCOIND_AUTH" ]; then
-    rpcargs="-rpcuser=$BITCOIND_AUTH_USER -rpcpassword=$BITCOIND_AUTH_PASS"
-
-  else error bitcoind BITCOIND_URL was specified, but the /bitcoin datadir was not mounted and BITCOIND_AUTH was not set
   fi
 
   info bitcoind Using external Bitcoin Core node at $BITCOIND_URL
-
-  # Test connection
   info -n bitcoind 'Testing connectivity... '
-  rpcargs="$rpcargs -rpcconnect=$(cut -d'/' -f3 <<< $BITCOIND_URL)"
-  s6-setuidgid bitcoin bitcoin-cli $rpcargs -rpcwait uptime > /dev/null
+
+  host=$(cut -d'/' -f3 <<< $BITCOIND_URL)
+  s6-setuidgid bitcoin bitcoin-cli -rpcconnect=$host -rpcwait uptime > /dev/null
   echo >&2 connected.
 
   # Signal readiness, then abort the service. We don't need it running for external nodes.
@@ -55,6 +46,16 @@ BITCOIND_OPTS="$BITCOIND_OPTS -datadir=$BITCOIND_DIR -chain=$BITCOIND_CHAIN
   $([ "$NETWORK" == "regtest" ] && echo "-fallbackfee=0.00001")
   $(bool_opt "$BITCOIND_TOR" && echo "-proxy=127.0.0.1:9050")
   $(bool_opt "$BITCOIND_LOGS" || echo "-printtoconsole=0")"
+
+# Open up the bitcoind rpc for remote access with the given user/pwd
+if [ -n "$BITCOIND_RPC_ACCESS" ]; then
+  IFS=':' read user pwd <<< "$BITCOIND_RPC_ACCESS"
+  salt=$(openssl rand -hex 16)
+  pwdhmac=$(echo -n "$pwd" | openssl sha256 -hmac "$salt" | cut -d' ' -f2)
+  BITCOIND_OPTS="$BITCOIND_OPTS -rpcbind=127.0.0.1 -rpcbind=$BIND_ADDR -rpcauth=$user:$salt\$$pwdhmac"
+  [ -n "$DOCKER_HOST_IP" ] && BITCOIND_OPTS="$BITCOIND_OPTS -rpcallowip=$DOCKER_HOST_IP"
+  info bitcoind "Opening RPC for remote access on $BIND_ADDR:$BITCOIND_RPC_PORT with username '$user'"
+fi
 
 # Sync from trusted snapshot (prunednode.today)
 bool_opt "$TRUSTED_FASTSYNC" && source fastsync/fastsync.sh
