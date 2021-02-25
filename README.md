@@ -12,22 +12,19 @@
 
 A simple single-container docker setup for a personal bitcoin full node. Featuring:
 
-- **Bitcoin Core:** Full node, pruned by default with optional (trusted) fast-sync
+- **Bitcoin Core:** Pruned by default with optional (trusted) fast-sync
 - **Electrum Server**: Personal Electrum server powered by BWT
 - **BTC RPC Explorer:** Personal block explorer and node dashboard
-- **Specter Desktop:** Wallet GUI with a focus on hardware and multi-sig setups
-- **Tor:** For onion services and (optionally) for proxying bitcoind
-- **SSH:** For secure remote access over SSH tunnels and remote control
-- **SSL:** Automatic self-signed or Let's Encrypt certificates
+- **Specter Desktop:** Wallet GUI for hardware and multi-sig setups
+- **Secure remote access** using Tor Onion, SSH tunnels or SSL
 
 Why eznode?
 
 - Simple, hassle-free setup with minimal configuration
 - Lightweight (a single 115 MB docker image)
 - Pruning-friendly (requires <5GB of storage)
-- Secure transports out-of-the-box
+- Suitable for a dedicated box, but doesn't require one
 - Supports Linux, macOS, Windows and ARMv7/v8
-<!-- - Self-contained, doesn't mess with the host-->
 
 Support development: [⚡ lightning or ⛓️ on-chain via BTCPay](https://btcpay.shesek.info/)
 
@@ -57,7 +54,7 @@ Support development: [⚡ lightning or ⛓️ on-chain via BTCPay](https://btcpa
 
 ## 🚀 Quickstart
 
-[Install Docker](https://docs.docker.com/get-docker/) and start eznode with the data directory mounted to `/data`:
+[Install Docker](https://docs.docker.com/get-docker/) (the only dependency) and start eznode with the data directory mounted to `/data`:
 ```bash
 $ docker run -it --rm --name ez -v ~/eznode:/data eznode/eznode TOR=1 XPUB=<xpub>
 ```
@@ -128,7 +125,7 @@ See the individual packages below for their configuration options.
 
 ### 💻 Connecting locally
 
-You can access the services from the same machine running eznode by connecting directly to the docker container virtual IP address, which will be shown on startup.
+On Linux, you can access the services from the same machine running eznode by connecting directly to the docker container virtual IP address, which will be shown on startup.
 
 ![](https://raw.githubusercontent.com/shesek/eee/master/docs/img/server-urls.png)
 
@@ -137,7 +134,11 @@ You can optionally create an `ez` hostname alias for easier access to the servic
 $ echo "$(docker inspect -f '{{.NetworkSettings.IPAddress}}' ez) ez" | sudo tee -a /etc/hosts
 ```
 
-On macOS, you'll have to publish the ports with `-p 127.0.0.1:<port>:<port>` (e.g. `-p 127.0.0.1:50001:50001`, between `docker run` and `eznode/eznode`) to make them available through `localhost`. Accessing them through the virtual IP address [will not work](https://docs.docker.com/docker-for-mac/networking/#known-limitations-use-cases-and-workarounds).
+On macOS/Windows, you'll have to publish the ports with `-p 127.0.0.1:<port>:<port>` to make them available through `localhost`. Accessing them through the virtual IP address will [not](https://docs.docker.com/docker-for-mac/networking/#known-limitations-use-cases-and-workarounds) [work](https://docs.docker.com/docker-for-windows/networking/#known-limitations-use-cases-and-workarounds). For example, to make the block explorer available at http://localhost:3002/, use:
+
+```bash
+$ docker run -it -p 127.0.0.1:3002:3002 --rm --name ez -v ~/eznode:/data eznode/eznode
+```
 
 The ports are: `8332` for the Bitcoin Core RPC, `50001` for the BWT Electrum server, `3060` for the HTTP API, `3002` for the block explorer and `25441` for Specter. They are unencrypted and not suitable for access over the internet.
 
@@ -180,7 +181,7 @@ You can access the services remotely using Tor onion services, SSH port tunnelin
 
 You can set `AUTH_TOKEN=mySecretPassword` to enable password authentication for everything *except* the Electrum server - BWT's HTTP API, BTC RPC Explorer and Specter.
 
-Using the Electrum server securely over the internet requires an authentication layer like SSH or Tor.
+Using the Electrum server securely over the internet requires an authentication layer like SSH or Tor. An attacker with access to your Electrum server could check whether certain addresses are associated with your wallet, by querying for their history and checking if the server knows about them or not.
 
 When the NGINX-backed SSL is enabled, NGINX will be configured to authenticate the password before forwarding traffic to the backend services. This helps protect against zero-day exploits.
 
@@ -224,15 +225,17 @@ If your node is running remotely, you can configure its URL and RPC credentials 
 <details>
  <summary>Expand instructions...</summary><br>
 
-If you'd like to use eznode's managed Bitcoin Core instance from your host, set `BITCOIND_RPC_ACCESS=<user:pwd>` to open the RPC server for external access and to enable password-based authentication.
+To issue RPC commands against eznode's managed Bitcoin Core instance, use `$ docker exec ez bitcoin-cli <command>` (see [*Server management*](#-server-management)).
 
-On macOS/Windows, you'll need to publish the RPC port with `-p 127.0.0.1:8332:8332` to make it available through `localhost`. On Linux you can access it directly through the container IP address or using the `ez` alias. (see [*Connecting Locally*](#-connecting-locally))
+To connect to the Bitcoin Core RPC from your host, set `BITCOIND_RPC_ACCESS=<user:pwd>` to open the RPC server for external access using password-based authentication.
+
+On macOS/Windows, you'll need to publish the RPC port with `-p 127.0.0.1:8332:8332` to make it available through `localhost`. On Linux you can access it directly through the container IP address or using the `ez` alias (see [*Connecting Locally*](#-connecting-locally)).
 
 If you'd like to access it remotely, set `BITCOIND_RPC_ONION` to expose it through an [onion service](#tor) or setup an [SSH tunnel](#dropbear).
 
 </details>
 
-#### Options (for managed bitcoind)
+#### Options (for managed full node)
 - `PRUNE=550` (set to `0` to disable pruning)
 - `TXINDEX=0` (enabling this requires pruning to be disabled)
 - `BITCOIND_LISTEN=0` (accept incoming connections on the bitcoin p2p network)
@@ -264,25 +267,24 @@ BWT keeps an index of your wallet transactions only. To make your wallet activit
 <details>
  <summary>Expand instructions...</summary><br>
 
-If you have [pruning](#%EF%B8%8F-pruning) enabled, starting with a new wallet is the easiest. Make sure you don't connect to public servers while creating it (you can start Electrum with `--offline` to ensure that).
+With pruning enabled (the default), starting with a new wallet is the easiest. Make sure you don't connect to public servers while creating it (you can start Electrum with `--offline` to ensure that).
+To use an existing wallet, follow the [instructions here](#%EF%B8%8F-pruning).
 
 Grab your xpub from `Wallet` > `Information` and add it to your config file (`~/eznode/config`) as a new line with `XPUB=<my-xpub>` (or `XPUB_*` if you have multiple).
 
-If you're using an existing wallet, set `RESCAN_SINCE` to the wallet creation time in `YYYY-MM-DD`.
+Restart eznode and wait for the BWT Electrum server to start up. This may take awhile if you're using an existing wallet that requires scanning for historical transactions.
 
-Restart eznode and wait for the BWT Electrum server to start up. This may take awhile depending on the rescan date.
-
-You can configure your Electrum wallet to connect to a local eznode with `$ ez electurm-cfg | bash -x` (assumes the [`ez` alias described below](#-server-management)). Or you can do it manually instead:
+You can then use `$ electrum $(ez electrum-args)` to start Electurm and connect it with your local eznode (assumes the [`ez` alias described below](#-server-management)). Or you can do this manually instead:
 
 ```
-$ electrum setconfig server ez:50001:t
-$ electrum setconfig oneserver true
-$ electrum setconfig skipmerklecheck true
+$ electrum --oneserver --server ez:50001:t --skipmerklecheck
 ```
 
-> The [`skipmerklecheck`](https://github.com/spesmilo/electrum/pull/4957) option is needed to support pruning. If you don't have the [`ez` hostname](#-connecting-locally) set up, replace `ez` with the virtual IP address shown on startup.
+> If you don't have the [`ez` hostname](#-connecting-locally) set up, replace `ez` with the IP address shown on startup (`electrum-args` does this automatically). The [`skipmerklecheck`](https://github.com/spesmilo/electrum/pull/4957) option is needed to support pruning.
 
-If you're connecting remotely, you'll need to setup [Tor Onion or SSH](#-connecting-remotely) for secure access.
+To configure Electrum to use eznode by default, run `$ ez electrum-cfg | bash -x`. This will issue `electrum setconfig` commands (you can run without `| bash` to see them).
+
+If you're connecting remotely, you'll need to setup [Tor Onion or an SSH tunnel](#-connecting-remotely) for secure access.
 
 </details>
 
@@ -317,6 +319,9 @@ Automatically connects with the BWT Electrum server, to enable exploration of yo
 
 #### Pruning support
 
+<details>
+ <summary>Expand...</summary><br>
+
 When pruning is enabled or if `txindex` is disabled (the default), some functionality will be limited:
 - You will only be able to search for wallet, mempool and recently confirmed transactions by their `txid`. Searching for non-wallet transactions that were confirmed over 3 blocks ago is only possible if you provide the confirmed block height in addition to the `txid`.
 - Pruned blocks will display basic header information, without the list of transactions. Transactions in pruned blocks will not be available, unless they're wallet-related.
@@ -324,8 +329,7 @@ When pruning is enabled or if `txindex` is disabled (the default), some function
 - Mining fees will only be shown for unconfirmed transactions.
 
 Enabling full block explorer functionality requires setting `PRUNE=0 TXINDEX=1`.
-
-> Currently uses the [`feature-prune-support` branch](https://github.com/janoside/btc-rpc-explorer/commits/feature-prune-support) fork (pending [#279](https://github.com/janoside/btc-rpc-explorer/pull/279)).
+</details>
 
 #### Options
 - `EXPLORER=1` (enabled by default, set to `0` to turn off)
@@ -341,7 +345,7 @@ Plus all of [btc-rpc-explorer's options](https://github.com/janoside/btc-rpc-exp
 
 [Specter Desktop](https://github.com/cryptoadvance/specter-desktop), a wallet GUI for Bitcoin Core with a focus on hardware and multi-sig setups.
 
-Using Specter with USB hardware wallets requires [setting up udev rules](https://github.com/cryptoadvance/specter-desktop/tree/master/udev#udev-rules) on the host and starting docker with [`--device /dev/<usb-device-id>`](https://docs.docker.com/engine/reference/commandline/run/#add-host-device-to-container---device). Alternatively, you can also use [`--privileged -v /dev:/dev`](https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities) to give the container full access to the host environment, but this is not recommended.
+Using Specter with USB hardware wallets requires [setting up udev rules](https://github.com/cryptoadvance/specter-desktop/tree/master/udev#udev-rules) on the host and starting docker with [`--device /dev/<usb-device-id>`](https://docs.docker.com/engine/reference/commandline/run/#add-host-device-to-container---device). If you're unsure what the device id is, you could also (less ideally) use [`--privileged -v /dev:/dev`](https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities) to give the container full access to all the host devices.
 
 #### Options
 - `SPECTER=0` (disabled by default, set to `1` to enable)
@@ -497,11 +501,11 @@ To setup, set `SSL=1`, publish the SSL port and make sure to enable token authen
 $ docker run -it -p 443:3443 ... eznode/eznode SSL=1 AUTH_TOKEN=mySecretPassword
 ```
 
-A private key and a self-signed certificate will be automatically generated and saved to `/data/ssl-keys/selfsigned.{key,cert}`.
+A private key and a self-signed certificate will be automatically generated and saved to `/data/ssl-keys/selfsigned.{key,cert}`. See [`letsnecrypt`](#letsnecrypt) below for a CA-signed cert.
 
 The web services will be available on port `3443` under `/bwt/`, `/explorer/` and `/specter/`.
 
-⚠️ The *unauthenticated* Electrum SSL server will be available on port `50002`. It should *not* be exposed directly to the Internet and is meant to be used behind an authentication layer like SSH or Tor. An attacker with access to your Electrum server could check whether certain addresses are associated with your wallet, by querying for their history and checking if the server knows about them or not.
+The *unauthenticated* Electrum SSL server will be available on port `50002`. It should *not* be exposed directly to the Internet and is meant to be used behind an authentication layer like SSH or Tor.
 
 When `AUTH_TOKEN` is set, NGINX will be configured to authenticate the password before forwarding traffic to the backend web services. This helps protect against zero-day exploits.
 
@@ -538,6 +542,7 @@ Verifying domain ownership for the LetsEncrypt certificate requires accepting co
 
 ```
 server {
+    listen 80;
     server_name ez.mynodebox.com;
     location /.well-known/acme-challenge/ { proxy_pass http://localhost:8080; }
 }
@@ -549,13 +554,11 @@ Then start docker with `-p 3443:3443 -p 127.0.0.1:8080:8080` and access the SSL 
 #### Options
 - `SSL_DOMAIN=<none>` (obtain CA-signed certificate for the given domain)
 - `LETSENCRYPT_EMAIL=<none>` (for renewal and security notices, optional)
-- `LETSENCRYPT_LOGS=0` (display nginx’s logs in the `docker run` output)
+- `LETSENCRYPT_LOGS=0` (display letsencrypt’s logs in the `docker run` output)
 
 #### Paths
 - `/data/ssl-keys/letsencrypt` (keys and certificates)
 
-#### Ports
-*Same as NGINX.*
 
 # 🔧 Server management
 
@@ -617,7 +620,7 @@ It will look something like this:
 
 The main logs are displayed in the `docker run` output, including some select important log messages across all services. If you're running the container in the background, you can use `$ docker logs -f ez` to view them.
 
-`$ ez logs` will display full logs from all the services and follow them (à la `tail -f`). You can use `$ ez logs <services...>` to select specific services.
+`$ ez logs` will display full logs from all the services and follow them (`tail -f` like). You can use `$ ez logs <services...>` to select specific services.
 
 `-n` sets how many last log lines are returned initially (defaults to 8). `-c` reads the logs without following them. For example: `$ ez logs -c -n 1000 bitcoind`.
 
@@ -645,11 +648,12 @@ $ docker exec ez backup > ez-backup.tar.gz
 
 The backup includes the following:
 
-- Bitcoin Core wallet files (`/data/bitcoin/**/wallets`)
-- Specter wallets/devices/configuration (`/data/specter`)
+- Bitcoin Core wallets (`/data/bitcoin/**/wallets`) + `bitcoin.conf`
+- Specter wallets/devices config (`/data/specter`)
 - SSH keys (`/data/ssh-keys`)
 - SSL keys/certificates (`/data/nginx-keys`)
 - Tor onion service files (`/data/tor-hsv`)
+- Config file (`/data/config`)
 
 Everything that needs to be backed up is kept within the directory mounted to `/data`, so keeping a safe copy of it is sufficient. But `/data` also includes files that don't require a backup, like the bitcoind data files. The `/important` directory contains the minimal set of files that do require it.
 
