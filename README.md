@@ -224,11 +224,9 @@ If your node is running remotely, you can configure its URL and RPC credentials 
 <details>
  <summary>Expand instructions...</summary><br>
 
-If you'd like to access eznode's managed Bitcoin Core instance from your host, set `BITCOIND_RPC_ACCESS=<user:pwd>` to enable password authentication and `--add-host` so it can automatically whitelist the host's IP address (with `-rpcallowip`):
+If you'd like to use eznode's managed Bitcoin Core instance from your host, set `BITCOIND_RPC_ACCESS=<user:pwd>` to open the RPC server for external access and to enable password-based authentication.
 
-```bash
-$ docker run -v --add-host host.docker.internal:host-gateway -it ... eznode/eznode BITCOIND_RPC_ACCESS=satoshi:mySecretPassword
-```
+On macOS/Windows, you'll need to publish the RPC port with `-p 127.0.0.1:8332:8332` to make it available through `localhost`. On Linux you can access it directly through the container IP address or using the `ez` alias. (see [*Connecting Locally*](#-connecting-locally))
 
 If you'd like to access it remotely, set `BITCOIND_RPC_ONION` to expose it through an [onion service](#tor) or setup an [SSH tunnel](#dropbear).
 
@@ -239,7 +237,7 @@ If you'd like to access it remotely, set `BITCOIND_RPC_ONION` to expose it throu
 - `TXINDEX=0` (enabling this requires pruning to be disabled)
 - `BITCOIND_LISTEN=0` (accept incoming connections on the bitcoin p2p network)
 - `BITCOIND_TOR=0` (connect to the bitcoin network through tor)
-- `BITCOIND_RPC_ACCESS` (expose the bitcoind rpc)
+- `BITCOIND_RPC_ACCESS` (expose the bitcoind rpc with password-based auth)
 - `BITCOIND_RPC_ONION=0` (expose the bitcoind rpc over onion)
 - `BITCOIND_OPTS=<none>` (custom cli options for bitcoind)
 - `BITCOIND_LOGS=0` (display bitcoind's logs in the `docker run` output)

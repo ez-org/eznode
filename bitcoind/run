@@ -50,11 +50,12 @@ BITCOIND_OPTS="$BITCOIND_OPTS -datadir=$BITCOIND_DIR -chain=$BITCOIND_CHAIN
 # Open up the bitcoind rpc for remote access with the given user/pwd
 if [ -n "$BITCOIND_RPC_ACCESS" ]; then
   IFS=':' read user pwd <<< "$BITCOIND_RPC_ACCESS"
+  [ -n "$pwd" ] || error bitcoind 'BITCOIND_RPC_ACCESS expected in <username>:<password> format'
+  info bitcoind "Enabling RPC access on $BIND_ADDR:$BITCOIND_RPC_PORT with username '$user'"
   salt=$(openssl rand -hex 16)
   pwdhmac=$(echo -n "$pwd" | openssl sha256 -hmac "$salt" | cut -d' ' -f2)
-  BITCOIND_OPTS="$BITCOIND_OPTS -rpcbind=127.0.0.1 -rpcbind=$BIND_ADDR -rpcauth=$user:$salt\$$pwdhmac"
-  [ -n "$DOCKER_HOST_IP" ] && BITCOIND_OPTS="$BITCOIND_OPTS -rpcallowip=$DOCKER_HOST_IP"
-  info bitcoind "Opening RPC for remote access on $BIND_ADDR:$BITCOIND_RPC_PORT with username '$user'"
+  BITCOIND_OPTS="$BITCOIND_OPTS -rpcauth=$user:$salt\$$pwdhmac -rpcbind=127.0.0.1
+    -rpcbind=$BIND_ADDR -rpcallowip=$(cut -d'.' -f1-3 <<< $BIND_ADDR).0/24"
 fi
 
 # Sync from trusted snapshot (prunednode.today)
