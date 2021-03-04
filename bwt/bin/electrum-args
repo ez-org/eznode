@@ -1,0 +1,5 @@
+#!/bin/bash
+set -eo pipefail
+
+host=$(printcontenv HOST_ALIAS || printcontenv BIND_ADDR)
+echo -n "--skipmerklecheck --oneserver --server $host:50001:t"

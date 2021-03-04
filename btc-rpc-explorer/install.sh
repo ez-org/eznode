@@ -20,12 +20,15 @@ tar xzf /tmp/node.tar.gz -C $HOME
 mv $HOME/node-* $HOME/node && chown -R btcexp $HOME/node
 
 # Install btc-rpc-explorer
-# Use janoside/btc-rpc-explorer#feature-prune-support, pending https://github.com/janoside/btc-rpc-explorer/pull/279
-wget -qO /tmp/btcexp.tar.gz https://github.com/janoside/btc-rpc-explorer/archive/$BTCEXP_COMMIT.tar.gz
-echo "$BTCEXP_SHA256 /tmp/btcexp.tar.gz" | sha256sum -c -
+#wget -qO /tmp/btcexp.tar.gz https://github.com/janoside/btc-rpc-explorer/archive/$BTCEXP_COMMIT.tar.gz
+#echo "$BTCEXP_SHA256 /tmp/btcexp.tar.gz" | sha256sum -c -
+
+# Use fork pending XXX
+wget -qO /tmp/btcexp.tar.gz https://github.com/shesek/btc-rpc-explorer/archive/f8fe71f04cfa25a82fbae15566bafb2eaf009988.tar.gz
+echo "5fd913d607383037d8c4fc462b5ac6f99cc1401db94dc3263ea133162a117b95 /tmp/btcexp.tar.gz" | sha256sum -c -
 
 # Trim js code down from 69MB to 3MB by bundling the entire tree into a single minified .js file.
-# This doesn't work for native libraries (redis, dtrace & tiny-secp256k1), which appears to be acceptable.
+# This doesn't work for native libraries, but not having them appears to be acceptable.
 # They could be made to work by keeping their dir in node_modules and instructing browserify to skip them with -x.
 # They also require build-essential and python3 to be installed during the build.
 s6-setuidgid btcexp bash -xeo pipefail << 'PRIV'
@@ -34,7 +37,7 @@ s6-setuidgid btcexp bash -xeo pipefail << 'PRIV'
   if [ -n "$DEV" ]; then mv $HOME/node/lib/node_modules/btc-rpc-explorer $HOME/dist; exit 0; fi
   mkdir ~/dist ~/dist/bin
   cd $HOME/node/lib/node_modules/btc-rpc-explorer
-  (cd bin && browserify --node -x v8 -x node-bitcoin-script -x async_hooks -x hiredis www \
+  (cd bin && browserify --node -x v8 -x node-bitcoin-script -x async_hooks -x hiredis -x event-loop-stats ./www \
     | terser -cm > ~/dist/bin/www)
   rm -r public/img/screenshots
   mv views public CHANGELOG.md ~/dist/

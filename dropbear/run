@@ -40,12 +40,10 @@ fi
 # 1. Mount /root/.ssh/authorized_keys
 # 2. Mount the client's public key into /root/id.pub
 # 3. Don't mount anything and a new key will automatically be generated into /data/ssh-keys
-if [ -f ~/.ssh/authorized_keys ]; then
-  if mountpoint -q ~/.ssh/authorized_keys; then
-    info ssh Authorizing client pubkeys mounted in /root/.ssh/authorized_keys
-    [ -n "$DROPBEAR_RESTRICTIONS" ] && warn ssh The $DROPBEAR_RESTRICTIONS restrictions will not be applied \
-      to your custom authorized_keys file. You may add them yourself. Login is still disallowed.
-  fi # Otherwise, the existing authorized_keys file was created by a previous run of this script.
+if mountpoint -q ~/.ssh/authorized_keys; then
+  info ssh Authorizing client pubkeys mounted in /root/.ssh/authorized_keys
+  [ -n "$DROPBEAR_RESTRICTIONS" ] && warn ssh The $DROPBEAR_RESTRICTIONS restrictions will not be applied \
+    to your custom authorized_keys file. You may add them yourself. Login is still disallowed.
 else
   if [ -f ~/id.pub ]; then
     info ssh "Authorizing client pubkey mounted in /root/id.pub ($(fingerprint ~/id.pub))"
@@ -78,11 +76,11 @@ info ssh "${ORANGE}Verify the host's SSH key fingerprint on the first connection
 info ssh Starting Dropbear SSH server on $SSHD_ADDR:2222 $([ "$SSHD" != "UNRESTRICTED" ] && echo '(port tunneling only)')
 signal_readiness
 
-# -F		Don't fork into background
-# -E		Log to stderr rather than syslog
-# -s		Disable password logins
-# -p    listen [address:]port
-# -r    host key file
+# -F  Don't fork into background
+# -E  Log to stderr rather than syslog
+# -s  Disable password logins
+# -p  listen [address:]port
+# -r  host key file
 exec dropbear -FEs -p $SSHD_ADDR:2222 -r /data/ssh-keys/host_rsa.dropbear \
   "$([ -n "$DROPBEAR_FORCED_CMD" ] && echo "-c$DROPBEAR_FORCED_CMD")" \
   $DROPBEAR_OPTS 2>&1

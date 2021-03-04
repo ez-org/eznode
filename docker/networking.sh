@@ -1,16 +1,19 @@
 # -- expected to be `source`ed
 
-# Detect Docker on macOS. It behaves differently:
+# Detect host OS. Docker on macOS/Widows behaves differently:
 # https://docs.docker.com/docker-for-mac/networking/#known-limitations-use-cases-and-workarounds
-IS_MACOS=$(uname -r | grep -Eq -- '-moby$|-linuxkit($|-)' && echo 1 || return 0)
+# https://docs.docker.com/docker-for-windows/networking/#known-limitations-use-cases-and-workarounds
+HOST_OS=$(uname -r | grep -Eq -- '-(moby|linuxkit)' && echo macOS \
+      || (uname -r | grep -Eq -- '-microsoft' && echo Windows \
+      || echo Linux))
 
 # Detect Docker's networking mode and determine the address to bind on
 if [ -z "$BIND_ADDR" ]; then
   addrs=$(hostname -I)
   
-  # macOS doesn't support host networking mode and doesn't allow accessing the
-  # container by its virtual IP address, so we can just bind on 0.0.0.0.
-  if [ -n "$IS_MACOS" ]; then
+  # macOS/windows doesn't support host networking mode and doesn't allow accessing
+  # the container by its virtual IP address, so we can just bind on 0.0.0.0.
+  if [ $HOST_OS != Linux ]; then
     export BIND_ADDR=0.0.0.0
 
   # In a virtual docker network env, our hostname will resolve to a single IP
@@ -20,7 +23,7 @@ if [ -z "$BIND_ADDR" ]; then
   elif grep -Eq '^172\.\S+ ' <<< $addrs; then
     export BIND_ADDR=${addrs/ /}
 
-  # Bind on 127.0.0.1 in host networking mode as a safety precaution
+  # Bind on 127.0.0.1 in host networking mode, as a safety precaution.
   else
     export BIND_ADDR=127.0.0.1
     warn networking "You appear to be running in docker host networking mode (--net host)." \
@@ -32,8 +35,8 @@ if [ -z "$BIND_ADDR" ]; then
 fi
 
 # Automagically add an entry to /ez/hosts (mounted from the hosts's /etc/hosts)
-if [ -f "/ez/hosts" ]; then
-  [ -n "$IS_MACOS" ] && error networking The /ez/hosts alias feature is not supported on macOS
+if [ -f /ez/hosts ]; then
+  [ $HOST_OS != Linux ] && error networking The /ez/hosts alias feature is not supported on $HOST_OS
   export HOST_ALIAS=${HOST_ALIAS:-ez}
   cat <<< $(grep -v "^\S\+ $HOST_ALIAS\$" /ez/hosts) > /ez/hosts
   info networking Adding /etc/hosts entry: \
@@ -42,8 +45,9 @@ if [ -f "/ez/hosts" ]; then
 fi
 
 # Show instructions for local access on macOS
-if [ -n "$IS_MACOS" ]; then
-  warn networking "Accessing the container by its virtual IP address is not possible on macOS." \
+if [ $HOST_OS != Linux ]; then
+  warn networking "Accessing the container by its virtual IP address is not possible on $HOST_OS." \
                   "To access the services locally, you'll need to publish the ports with \`-p 127.0.0.1:<port>:<port>\` to make them available through localhost."$'\n' \
-                  "For example: \$ docker run -it -v ~/eznode:/data -p 127.0.0.1:50001:50001 -p 127.0.0.1:3002:3002 eznode/eznode"
+                  "For example: \$ docker run -it -v ~/eznode:/data -p 127.0.0.1:50001:50001 eznode/eznode"$'\m' \
+                  "Learn more: https://github.com/ez-org/eznode#-connecting-locally"
 fi

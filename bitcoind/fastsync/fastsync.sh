@@ -7,7 +7,7 @@
 [ "$PRUNE" -ge 550 ] && [ "$PRUNE" -le 1000 ] || error fastsync TRUSTED_FASTSYNC must be used with prune '<=' 1000
 
 if [ -d /data/bitcoin/blocks ]; then
-  info fastsync Found existing datadir. Delete it to force a re-download of the fastsync snapshot.
+  info fastsync Found existing datadir at /data/bitcoin. Delete it to force a re-download of the fastsync snapshot.
   return 0
 fi
 
@@ -37,6 +37,6 @@ info fastsync Extracting snapshot...
 unzip -n $dest.zip -x bitcoin.conf -d /data/bitcoin/ \
   | pv -pte -l -s $(unzip -Z -1 $dest.zip | wc -l) > /dev/null
 
-[ -n "$KEEP_SNAPSHOT" ] || rm $dest.zip
+[ -n "$FASTSYNC_KEEP_SNAPSHOT" ] || rm $dest.zip
 
 info fastsync Ready to go!

@@ -17,10 +17,11 @@ mv bitcoin-cli /ez/bin/
 # Show warning message on shutdown
 mv shutdown-message.sh /etc/cont-finish.d/bitcoind-shutdown-message.sh
 
-# Symlink wallet directories to mark them for backup
-ln -s /data/bitcoin/wallets /important/bitcoind-wallets
-for n in signet testnet3 regtest; do
-  ln -s /data/bitcoin/$n/wallets /important/bitcoind-wallets-$n
+# Symlink wallet directories and config file to mark them for backup
+mkdir /important/bitcoin
+ln -s /data/bitcoin/{wallets,bitcoin.conf} /important/bitcoin/
+for net in signet testnet3 regtest; do
+  ln -s /data/bitcoin/$net/wallets /important/bitcoin/wallets-$net
 done
 
 # Required for the fastsync script

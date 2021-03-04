@@ -12,13 +12,14 @@ wait_for_file() { # (path, timeout=15s)
   || { warn $(basename $PWD) $1 did not appear && return 1; }
 }
 
+# Utility wrappers for s6 supervision management
+svstat() { s6-svstat -o $2 /run/s6/services/$1 2> /dev/null || echo unsupervised; }
+svwait() { s6-svwait "${@:2}" /run/s6/services/$1 2> /dev/null; }
+
 wait_for_service() { # (service, timeout=3 minutes)
   timeout=${2:-180000}
   debug $(basename $PWD) waiting for $1 $([ $timeout -ne 0 ] && echo "for up to $(awk '{print ($1/1000)}' <<< $timeout )s")
-  # wait for the fd readiness notification when the fd file exists (https://skarnet.org/software/s6/notifywhenup.html)
-  wait_type=$([ -f /run/s6/services/$1/notification-fd ] && echo '-U' || echo '-u')
-  s6-svwait -t $timeout $wait_type /run/s6/services/$1 2> /dev/null \
-    || { debug $(basename $PWD) failed waiting for $1 && return 1; }
+  svwait $1 -t $timeout -U || { debug $(basename $PWD) failed waiting for $1 && return 1; }
 }
 
 wait_for_bitcoind() {
@@ -36,10 +37,11 @@ abort_service() {
   touch down && s6-svc -O . && exit 0
 }
 
-# Signal that the service is ready through s6's fd notification mechanism.
+# Signal that the service is ready through s6's fd notification mechanism
 # See https://skarnet.org/software/s6/notifywhenup.html
 signal_readiness() { echo >&5; }
 
+# Start a program and keep its pid to a file
 pidfile() { #(pidfile, command...)
   "${@:2}" &
   echo $! > $1
@@ -50,18 +52,19 @@ killpidf() { #(pidfile)
   rm "$1"
 }
 
-# helper function to run some code just once. mkdir will fail on subsequent calls.
+# Helper function to run some code just once (mkdir will fail on subsequent calls)
 do_once() { mkdir /tmp/once.$1 2> /dev/null; }
-
-svstat() { s6-svstat -o $2 /run/s6/services/$1 2> /dev/null || echo unsupervised; }
 
 BOLD=$(echo -en '\e[1m')
 RED=$(echo -en '\e[31m')
 GREEN=$(echo -en '\e[32m')
+#LGREEN=$(echo -en '\e[92m')
 YELLOW=$(echo -en '\e[33m')
+#LYELLOW=$(echo -en '\e[93m')
 ORANGE=$(echo -en '\e[0;33m')
 BLUE=$(echo -en '\e[34m')
 CYAN=$(echo -en '\e[36m')
+#LCYAN=$(echo -en '\e[96m')
 LGRAY=$(echo -en '\e[0;37m')
 RESTORE=$(echo -en '\e[0m')
 

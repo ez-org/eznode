@@ -5,17 +5,19 @@ source /ez/util.sh
 [ -n "$SSL_DOMAIN" ] || abort_service
 
 if [ "$EUID" -eq 0 ]; then
-  wait_for_service nginx || exit 0
+  wait_for_service nginx || exit 0 # retry on timeout
   # Drop permissions for the rest of the script in a new shell
   exec s6-setuidgid www-data $0
 fi
 
-info letsencrypt Setting up LetsEncrypt certificate for $SSL_DOMAIN at /data/nginx-ssl
+info letsencrypt Setting up LetsEncrypt certificate for https://$SSL_DOMAIN/ in /data/nginx-ssl
+
+# Shared options for run & renew
+LETSENCRYPT_OPT="$LETSENCRYPT_OPT --http-01-port 8080 --config-dir /data/nginx-ssl/letsencrypt
+  $([ -n "$LETSENCRYPT_LOGS" ] || echo "--quiet")"
 
 # Obatain certificate
-certbot --nginx -d "$SSL_DOMAIN" --hsts --non-interactive --agree-tos \
-  --http-01-port 8080 --config-dir /data/nginx-ssl/letsencrypt \
-  $([ -n "$LETSENCRYPT_LOGS" ] || echo "--quiet") \
+certbot run $LETSENCRYPT_OPT --nginx -d "$SSL_DOMAIN" --hsts --non-interactive --agree-tos \
   $([ -n "$LETSENCRYPT_EMAIL" ] && echo "--email $LETSENCRYPT_EMAIL" \
                                 || echo "--register-unsafely-without-email") \
   2>&1
@@ -26,7 +28,7 @@ ssl_directives=$(grep /data/nginx-ssl/letsencrypt /etc/nginx/nginx.conf | sed 's
 sed -i "s~# LETSENCRYPT-GOES-HERE~$ssl_directives~" /etc/nginx/nginx.conf
 nginx -s reload
 
-info letsencrypt LetsEncrypt certificate set up successfully at https://$SSL_DOMAIN/
+info letsencrypt LetsEncrypt certificate set up successfully
 
 # Try renewing every now and then
-while :; do sleep 2d; certbot renew 2>&1; done
+while :; do sleep 2d; certbot renew $LETSENCRYPT_OPT; done 2>&1
