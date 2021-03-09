@@ -4,15 +4,15 @@ source /ez/util.sh
 
 bool_opt "$TOR" || abort_service
 
-if [ "$EUID" -eq 0 ]; then
-  bool_opt "$TOR_NONANONYMOUS" && bool_opt "$BITCOIND_TOR" && \
-    error tor The TOR_NONANONYMOUS and BITCOIND_TOR options are incompatible. \
-              Running Tor in NON-ANONYMOUS mode makes it impossible to also use it as proxy. \
-              See https://gitlab.torproject.org/legacy/trac/-/issues/21284
-    # this could be worked around by running two tor instances.
+bool_opt "$TOR_NONANONYMOUS" && bool_opt "$BITCOIND_TOR" && \
+  error tor The TOR_NONANONYMOUS and BITCOIND_TOR options are incompatible. \
+            Running Tor in NON-ANONYMOUS mode makes it impossible to also use it as proxy. \
+            See https://gitlab.torproject.org/legacy/trac/-/issues/21284
+# this could be worked around by running two tor instances.
 
+if [ "$EUID" -eq 0 ]; then
   # Wait for bitcoind before starting up tor, unless tor is used by bitcoind
-  bool_opt "$BITCOIND_TOR" || wait_for_bitcoind
+  bool_opt "$BITCOIND_TOR" || wait_for_bitcoind || exit 0
 
   # Setup the onion directory with the permissions required by the tor daemon
   mkdir -p /data/tor-hsv && chown debian-tor:debian-tor /data/tor-hsv && chmod 700 /data/tor-hsv
@@ -25,14 +25,14 @@ fi
 ./torrc.tmpl > /etc/tor/torrc
 
 # Display some 'Bootstrapped N%' log messages when TOR_LOGS is disabled
-(bool_opt "$TOR_LOGS" || (pfile=$(mktemp) && pidfile $pfile timeout 10m \
+(bool_opt "$TOR_LOGS" || pidfile /tmp/tor-tldr.pid timeout 10m \
   tail -F -n0 /var/log/tor/tor.log 2> /dev/null \
-  | grep -m 4 --line-buffered -o 'Bootstrapped \(5\|50\|80\|100\)%.*' \
-  | { while read m; do info tor $m; done; killpidf $pfile; } &)) 1>&2
+  | sed -unr 's/.*] //; /^Bootstrapped (5|50|80|100)%/{p;/100%/q}' \
+  | { while read m; do info tor $m; done; killpidf /tmp/tor-tldr.pid; } &) 1>&2
 
 # Spawn background subshell to signal readiness and display service information
 ((
-  wait_for_file /var/lib/tor/control_socket 10s
+  wait_for_file /var/lib/tor/control_socket 30s
   signal_readiness
 
   onion=$(cat /data/tor-hsv/hostname)

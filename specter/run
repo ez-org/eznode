@@ -5,7 +5,7 @@ source /ez/util.sh
 bool_opt "$SPECTER" || abort_service
 
 if [ "$EUID" -eq 0 ]; then
-  wait_for_bitcoind
+  wait_for_bitcoind || exit 0
   mkdir -p /data/specter && chown specter:specter /data/specter
   # Drop permissions for the rest of the script in a new shell
   exec s6-setuidgid specter $0
@@ -34,10 +34,10 @@ if [ -n "$AUTH_TOKEN" ]; then
 fi
 
 # Display some important log messages only when SPECTER_LOGS is disabled
-(bool_opt "$SPECTER_LOGS" || (pfile=$(mktemp) && pidfile $pfile timeout 20s \
+(bool_opt "$SPECTER_LOGS" || pidfile /tmp/specter-tldr.pid timeout 20s \
   tail -F -n0 /var/log/specter/current 2> /dev/null \
   | sed -unr '/Error/Ip; /\* Running on/{s/.*\* |\(.*//g;p;q}' \
-  | { while read m; do info specter $m; done; killpidf $pfile; } &)) 1>&2
+  | { while read m; do info specter $m; done; killpidf /tmp/specter-tldr.pid; } &) 1>&2
 
 # Start
 signal_readiness

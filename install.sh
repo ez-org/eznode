@@ -2,7 +2,7 @@
 set -xeo pipefail
 
 apt-get update -qq
-apt-get install -qqy --no-install-recommends wget procps ca-certificates
+apt-get install -qqy --no-install-recommends wget procps ca-certificates jq
 
 mkdir /ez /ez/bin /important /data
 mv entrypoint.sh util.sh docker/networking.sh s6/default-finish.sh /ez/

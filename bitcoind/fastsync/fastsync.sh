@@ -21,7 +21,11 @@ dest=/data/fastsync/$latest_snapshot
 
 # Download
 info fastsync Downloading $age days old snapshot from https://prunednode.today/$latest_snapshot.zip
-wget --continue -qO $dest.zip https://prunednode.today/$latest_snapshot.zip --show-progress
+if [ -n "$FASTSYNC_PARALLEL" ]; then
+  axel --num-connections $FASTSYNC_PARALLEL -o $dest.zip -a https://prunednode.today/$latest_snapshot.zip >&2
+else
+  wget --continue -qO $dest.zip https://prunednode.today/$latest_snapshot.zip --show-progress
+fi
 wget -qO $dest.signed.txt https://prunednode.today/$latest_snapshot.signed.txt --show-progress
 
 # Verify

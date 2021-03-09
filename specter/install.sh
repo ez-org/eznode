@@ -9,7 +9,7 @@ mkdir /var/log/specter && chown nobody /var/log/specter
 export HOME=/home/specter
 
 # Dependencies (runtime deps on first line, others are build deps)
-apt-get install -yqq --no-install-recommends python3.7 libusb-1.0-0 jq \
+apt-get install -yqq --no-install-recommends python3.7 libusb-1.0-0 \
   python3.7-dev python3-pip python3-setuptools build-essential libudev-dev libusb-1.0-0-dev python3-wheel \
   $([[ $(dpkg --print-architecture) == "arm"* ]] && echo libffi-dev libssl-dev)
 

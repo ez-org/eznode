@@ -25,4 +25,4 @@ for net in signet testnet3 regtest; do
 done
 
 # Required for the fastsync script
-apt-get install -qqy --no-install-recommends unzip pv
+apt-get install -qqy --no-install-recommends unzip pv axel

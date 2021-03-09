@@ -3,7 +3,7 @@ set -eo pipefail
 source /ez/util.sh
 
 bool_opt "$SSHD" || abort_service
-wait_for_bitcoind
+wait_for_bitcoind || exit 0
 mkdir -p ~/.ssh /data/ssh-keys
 
 : ${SSHD_ADDR:=$BIND_ADDR}

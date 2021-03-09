@@ -5,7 +5,7 @@ source /ez/util.sh
 [ -n "$SSL_DOMAIN" ] || abort_service
 
 if [ "$EUID" -eq 0 ]; then
-  wait_for_service nginx || exit 0 # retry on timeout
+  wait_for_service nginx || exit 0
   # Drop permissions for the rest of the script in a new shell
   exec s6-setuidgid www-data $0
 fi

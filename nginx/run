@@ -6,7 +6,7 @@ bool_opt "$SSL" || [ -n "$SSL_DOMAIN" ] || abort_service
 [ -z "$SSL_DOMAIN" ] || [ -d /run/s6/services/letsencrypt ] || error ssl CA-signed SSL requires letsencrypt to be installed
 
 if [ "$EUID" -eq 0 ]; then
-  wait_for_bitcoind
+  wait_for_bitcoind || exit 0
   mkdir -p /data/nginx-ssl && chown www-data /data/nginx-ssl && chmod 700 /data/nginx-ssl
 
   # Drop permissions for the rest of the script in a new shell

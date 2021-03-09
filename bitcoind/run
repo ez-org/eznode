@@ -15,15 +15,13 @@ if [ "$BITCOIND_MODE" == "remote" ]; then
   info bitcoind Using external Bitcoin Core node at $BITCOIND_URL
   info -n bitcoind 'Testing connectivity... '
 
-  host=$(cut -d'/' -f3 <<< $BITCOIND_URL)
-  s6-setuidgid bitcoin bitcoin-cli -rpcconnect=$host -rpcwait uptime > /dev/null
+  bitcoin-cli -rpcwait uptime > /dev/null
   echo >&2 connected.
 
   # Signal readiness, then abort the service. We don't need it running for external nodes.
   signal_readiness
   abort_service
 fi
-
 
 if [ "$EUID" -eq 0 ]; then
   mkdir -p /data/{bitcoin,fastsync}
@@ -68,7 +66,7 @@ mkdir -p $BITCOIND_NETDIR/wallets
 # Spawn background subshell to signal readiness and run some post-initialization code
 ((
   # Wait for the RPC to warm up and test connectivity
-  bitcoin-cli -rpcwait uptime > /dev/null # TODO timeout
+  pidfile /tmp/bitcoind-rpcwait.pid bitcoin-cli -rpcwait uptime > /dev/null # TODO timeout
   info bitcoind The Bitcoin Core RPC is ready
   chmod g+r $BITCOIND_NETDIR/.cookie
 
@@ -82,10 +80,10 @@ mkdir -p $BITCOIND_NETDIR/wallets
 ) &) 1>&2
 
 # Display a few important log messages only when BITCOIND_LOGS is disabled
-(bool_opt "$BITCOIND_LOGS" || (pfile=$(mktemp) && pidfile $pfile timeout 1h \
+(bool_opt "$BITCOIND_LOGS" || pidfile /tmp/bitcoind-tldr.pid timeout 1h \
   tail -F -n0 $BITCOIND_NETDIR/debug.log 2> /dev/null \
   | sed -urn 's/^\S+ //g; /^Bitcoin Core version|^Loaded best chain|^Verifying last/p; /^init message: Done/{p;q}' \
-  | { while read m; do info bitcoind $m; done; killpidf $pfile; } &)) 1>&2
+  | { while read m; do info bitcoind $m; done; killpidf /tmp/bitcoind-tldr.pid; } &) 1>&2
 
 # Start
 info bitcoind Starting Bitcoin Core...

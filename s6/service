@@ -60,17 +60,17 @@ case "$cmd" in
       echo -n "${BOLD}$service${RESTORE} "
       if [ $up == "unsupervised" ]; then
         echo "${RED}not supervised${RESTORE}"
-      elif [ $up == "false" ] && [ $(stat wantedup) == "false" ]; then
+      elif [ $up == false ] && [ $(stat wantedup) == false ]; then
         echo "${CYAN}disabled${RESTORE}"
       else
-        if [ $up == "true" ] && [ $(stat ready) == "true" ]; then echo -n "${GREEN}up${RESTORE} "
-        elif [ $up == "true" ]; then echo -n "${YELLOW}starting${RESTORE} "
+        if [ $up == true ] && [ $(stat ready) == true ]; then echo -n "${GREEN}up${RESTORE} "
+        elif [ $up == true ]; then echo -n "${YELLOW}starting${RESTORE} "
         else echo -n "${RED}down${RESTORE} "; fi
         s6-svstat $service | cut -d' ' -f2- | sed -r "s/want (up|down)/${ORANGE}\0${RESTORE}/; s/\) [0-9]+ seconds, ready /) ready /;"
       fi
 
       if [ $verbose -eq 1 ]; then
-        if [ $up == "true" ]; then
+        if [ $up == true ]; then
           pid=$(stat pid); user=$(ps -o user= -p $pid); cmd=$(xargs -0 echo < /proc/$pid/cmdline)
           echo "   ${BOLD}$user\$${RESTORE} $cmd"
         fi

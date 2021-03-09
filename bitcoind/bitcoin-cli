@@ -1,12 +1,18 @@
-#!/bin/bash
+#!/bin/bash -eo pipefail
 
-# bitcoin-cli wrapper with automatic datadir/auth/chain configuration
+# bitcoin-cli wrapper with automatic rpconnect/chain/datadir/auth configuration
+
+# drop permissions
+[ "$EUID" -eq 0 ] && exec s6-setuidgid bitcoin $0 "$@"
+
+host=$(printcontenv BITCOIND_URL | cut -d'/' -f3)
+chain=$(printcontenv BITCOIND_CHAIN)
+dir=$(printcontenv BITCOIND_DIR || return 0)
+
+# workaround for https://github.com/bitcoin/bitcoin/issues/21295
+[ -z "$dir" ] && { dir=/tmp/.bitcoin; mkdir -p $dir; }
 
 printcontenv BITCOIND_AUTH > /dev/null && \
   authargs="-rpcuser=$(printcontenv BITCOIND_AUTH_USER) -rpcpassword=$(printcontenv BITCOIND_AUTH_PASS)"
 
-BITCOIND_DIR=$(printcontenv BITCOIND_DIR || return 0)
-# workaround for https://github.com/bitcoin/bitcoin/issues/21295
-[ -z "$BITCOIND_DIR" ] && { BITCOIND_DIR=/tmp/.bitcoin; mkdir -p $BITCOIND_DIR; }
-
-exec /usr/local/bin/bitcoin-cli -datadir="$BITCOIND_DIR" -chain="$(printcontenv BITCOIND_CHAIN)" $authargs "$@"
+exec /usr/local/bin/bitcoin-cli -rpcconnect="$host" -datadir="$dir" -chain="$chain" $authargs "$@"

@@ -20,25 +20,25 @@ tar xzf /tmp/node.tar.gz -C $HOME
 mv $HOME/node-* $HOME/node && chown -R btcexp $HOME/node
 
 # Install btc-rpc-explorer
-#wget -qO /tmp/btcexp.tar.gz https://github.com/janoside/btc-rpc-explorer/archive/$BTCEXP_COMMIT.tar.gz
-#echo "$BTCEXP_SHA256 /tmp/btcexp.tar.gz" | sha256sum -c -
+wget -qO /tmp/btcexp.tar.gz https://github.com/janoside/btc-rpc-explorer/archive/$BTCEXP_COMMIT.tar.gz
+echo "$BTCEXP_SHA256 /tmp/btcexp.tar.gz" | sha256sum -c -
 
-# Use fork pending XXX
-wget -qO /tmp/btcexp.tar.gz https://github.com/shesek/btc-rpc-explorer/archive/f8fe71f04cfa25a82fbae15566bafb2eaf009988.tar.gz
-echo "5fd913d607383037d8c4fc462b5ac6f99cc1401db94dc3263ea133162a117b95 /tmp/btcexp.tar.gz" | sha256sum -c -
-
-# Trim js code down from 69MB to 3MB by bundling the entire tree into a single minified .js file.
+# Trim js code down from 69MB to 3.3MB by bundling the entire tree into a single minified .js file.
 # This doesn't work for native libraries, but not having them appears to be acceptable.
 # They could be made to work by keeping their dir in node_modules and instructing browserify to skip them with -x.
 # They also require build-essential and python3 to be installed during the build.
 s6-setuidgid btcexp bash -xeo pipefail << 'PRIV'
-  echo The native nodejs libraries are going to fail and fallback to pure js implementations. This is normal.
-  npm install -g /tmp/btcexp.tar.gz browserify terser
+  echo The native nodejs modules installation is going to fail. This is normal.
+  npm install -g /tmp/btcexp.tar.gz browserify@17.0.0 terser@5.6.0
   if [ -n "$DEV" ]; then mv $HOME/node/lib/node_modules/btc-rpc-explorer $HOME/dist; exit 0; fi
+
+  # hack to fix pug filters
+  fix_pug(){ sed 's~function(r){var n=e\[i\]\[1\]\[r\];return o(n||r)}~Object.assign(\0,{resolve:x=>x})~'; }
+
   mkdir ~/dist ~/dist/bin
   cd $HOME/node/lib/node_modules/btc-rpc-explorer
-  (cd bin && browserify --node -x v8 -x node-bitcoin-script -x async_hooks -x hiredis -x event-loop-stats ./www \
-    | terser -cm > ~/dist/bin/www)
+  (cd bin && browserify --node -r jstransformer-markdown-it -x v8 -x node-bitcoin-script -x async_hooks -x hiredis -x event-loop-stats \
+    ./www | fix_pug | terser -cm > ~/dist/bin/www)
   rm -r public/img/screenshots
   mv views public CHANGELOG.md ~/dist/
 PRIV

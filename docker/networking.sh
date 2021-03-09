@@ -48,6 +48,6 @@ fi
 if [ $HOST_OS != Linux ]; then
   warn networking "Accessing the container by its virtual IP address is not possible on $HOST_OS." \
                   "To access the services locally, you'll need to publish the ports with \`-p 127.0.0.1:<port>:<port>\` to make them available through localhost."$'\n' \
-                  "For example: \$ docker run -it -v ~/eznode:/data -p 127.0.0.1:50001:50001 eznode/eznode"$'\m' \
+                  "For example: \$ docker run -it -v ~/eznode:/data -p 127.0.0.1:50001:50001 eznode/eznode"$'\n' \
                   "Learn more: https://github.com/ez-org/eznode#-connecting-locally"
 fi

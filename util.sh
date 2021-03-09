@@ -1,14 +1,15 @@
 # -- expected to be `source`ed
 
-bool_opt() { [ -n "$1" ] && [ "$1" != "0" ] && [ "$1" != "false" ] && [ "$1" != "off" ]; }
+bool_opt() { [ -n "$1" ] && [ "$1" != 0 ] && [ "$1" != false ] && [ "$1" != off ]; }
 
 wait_for_file() { # (path, timeout=15s)
   timeout=${2:-15s}
   debug $(basename $PWD) waiting for $1 for up to $timeout
-  [ -f "$1" ] \
+  [ -e "$1" ] \
   || (pfile=$(mktemp) && pidfile $pfile timeout $timeout \
     inotifywait -e create,moved_to --format '%f' -m "$(dirname "$1")" 2>&1 \
     | { grep -qx 'Watches established.' && [ -f "$1" ] || grep -qFx "$(basename "$1")" && killpidf $pfile; }) \
+  || [ -e "$1" ] \
   || { warn $(basename $PWD) $1 did not appear && return 1; }
 }
 
@@ -41,15 +42,19 @@ abort_service() {
 # See https://skarnet.org/software/s6/notifywhenup.html
 signal_readiness() { echo >&5; }
 
-# Start a program and keep its pid to a file
+# (Re)start a program, keeping its pid to a file
 pidfile() { #(pidfile, command...)
+  [ -f "$1" ] && killpidf "$1"
   "${@:2}" &
   echo $! > $1
-  wait
+  wait -n
 }
 killpidf() { #(pidfile)
-  kill $(cat "$1") 2> /dev/null || true
+  [ -f "$1" ] || return 0
+  pid=$(cat "$1")
   rm "$1"
+  # `tail --pid` waits for the process to die (https://stackoverflow.com/a/41613532)
+  kill $pid 2> /dev/null && tail --pid=$pid -f /dev/null
 }
 
 # Helper function to run some code just once (mkdir will fail on subsequent calls)

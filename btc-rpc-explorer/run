@@ -3,7 +3,7 @@ set -eo pipefail
 source /ez/util.sh
 
 bool_opt "$EXPLORER" || abort_service
-wait_for_bitcoind
+wait_for_bitcoind || exit 0
 
 export HOME=/home/btcexp
 export PATH=$HOME/node/bin:$PATH
@@ -27,8 +27,8 @@ export BTCEXP_BITCOIND_USER=$BITCOIND_AUTH_USER
 export BTCEXP_BITCOIND_PASS=$BITCOIND_AUTH_PASS
 
 # Connect with the BWT Electrum server to enable exploring wallet addresses
-if bool_opt "$BWT" && [ -z "$BTCEXP_ELECTRUMX_SERVERS" ]; then
-  if wait_for_service bwt 15000; then
+if [ -z "$BTCEXP_ELECTRUMX_SERVERS" ] && [ $(svstat bwt wantedup) == true ]; then
+  if wait_for_service bwt 25000; then
     export BTCEXP_ADDRESS_API=electrumx
     export BTCEXP_ELECTRUMX_SERVERS=tcp://$BIND_ADDR:50001
   else
@@ -39,10 +39,10 @@ if bool_opt "$BWT" && [ -z "$BTCEXP_ELECTRUMX_SERVERS" ]; then
 fi
 
 # Display a few important log messages only when EXPLORER_LOGS is disabled
-(bool_opt "$EXPLORER_LOGS" || (pfile=$(mktemp) && pidfile $pfile timeout 1m \
+(bool_opt "$EXPLORER_LOGS" || pidfile /tmp/explorer-tldr.pid timeout 1m \
   tail -F -n0 /var/log/btc-rpc-explorer/current 2> /dev/null \
   | sed -unr 's/^\S+ \S+\s+\S+ | \S+$|, parsed.*//g; /Error/Ip; /Starting|Connected/p; /RPC Connected:/q' \
-  | { while read m; do info explorer $m; done; killpidf $pfile; } &)) 1>&2
+  | { while read m; do info explorer $m; done; killpidf /tmp/explorer-tldr.pid; } &) 1>&2
 
 # Start
 signal_readiness

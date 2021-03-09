@@ -3,7 +3,7 @@ set -eo pipefail
 source /ez/util.sh
 
 bool_opt "$BWT" || abort_service
-wait_for_bitcoind
+wait_for_bitcoind || exit 0
 
 # General config
 export ELECTRUM_ADDR=$BIND_ADDR:50001
@@ -22,7 +22,7 @@ if [ "$BITCOIND_MODE" == "local" ]; then
 fi
 
 # Disable historical rescan and merkle proofs when pruning is enabled
-if [ -n "$PRUNE" ] && [ "$PRUNE" != "0" ]; then
+if [ "$(bitcoin-cli getblockchaininfo | jq -er .pruned)" == true ]; then
   export RESCAN_SINCE=${RESCAN_SINCE:-now}
   export ELECTRUM_SKIP_MERKLE=${ELECTRUM_SKIP_MERKLE:-1}
 fi
@@ -41,7 +41,7 @@ fi
 
 # Suppress bwt's default startup banner and display it on our own,
 # with a slight delay and some modifications
-if [ -z "$NO_STARTUP_BANNER" ]; then
+if ! bool_opt "$NO_STARTUP_BANNER"; then
   export NO_STARTUP_BANNER=1
   (do_once bwt-banner && wait_for_service bwt 0 && sleep 1 && banner -s &) 1>&2
 fi
