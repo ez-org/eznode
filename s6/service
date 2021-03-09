@@ -4,6 +4,8 @@ shopt -s extglob
 shopt -s globstar
 source /ez/util.sh
 
+[ -d /var/run/s6/services/bitcoind ] || error service services are uninitialized
+
 cd /var/run/s6/services
 
 # Use 'status' as the default command

@@ -1,4 +1,5 @@
-#!/bin/bash -eo pipefail
+#!/bin/bash
+set -eo pipefail
 
 # bitcoin-cli wrapper with automatic rpconnect/chain/datadir/auth configuration
 

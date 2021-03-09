@@ -5,6 +5,12 @@ cat << CFG
 DataDirectory /var/lib/tor
 ControlSocket /var/lib/tor/control_socket
 
+
+ControlPort 9051
+CookieAuthentication 1
+CookieAuthFileGroupReadable 1
+CookieAuthFile /var/lib/tor/control_auth_cookie
+
 HiddenServiceDir /data/tor-hsv
 HiddenServiceVersion 3
 

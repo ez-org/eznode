@@ -29,6 +29,7 @@ sed -i "s~# LETSENCRYPT-GOES-HERE~$ssl_directives~" /etc/nginx/nginx.conf
 nginx -s reload
 
 info letsencrypt LetsEncrypt certificate set up successfully
+signal_readiness
 
 # Try renewing every now and then
 while :; do sleep 2d; certbot renew $LETSENCRYPT_OPT; done 2>&1

@@ -1,0 +1,7 @@
+#!/bin/bash -e
+
+# Send a notification to bwt's unix socket to trigger a real-time index sync.
+# This is used for bitcoind's 'blocknotify' and 'txnotify' scripts.
+# See https://github.com/bwt-dev/bwt#real-time-indexing
+
+nc -q1 -U /run/bwt/notify-socket 2> /dev/null || true

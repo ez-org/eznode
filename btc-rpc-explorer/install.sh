@@ -20,8 +20,10 @@ tar xzf /tmp/node.tar.gz -C $HOME
 mv $HOME/node-* $HOME/node && chown -R btcexp $HOME/node
 
 # Install btc-rpc-explorer
-wget -qO /tmp/btcexp.tar.gz https://github.com/janoside/btc-rpc-explorer/archive/$BTCEXP_COMMIT.tar.gz
-echo "$BTCEXP_SHA256 /tmp/btcexp.tar.gz" | sha256sum -c -
+#wget -qO /tmp/btcexp.tar.gz https://github.com/janoside/btc-rpc-explorer/archive/$BTCEXP_COMMIT.tar.gz
+#echo "$BTCEXP_SHA256 /tmp/btcexp.tar.gz" | sha256sum -c -
+wget -qO /tmp/btcexp.tar.gz https://github.com/shesek/btc-rpc-explorer/archive/133ff397c39eef86185cc66ea1a9fa64567fb824.tar.gz
+echo "e0aa7497682dc626e0d10f429916e882162fdbce94efff02a88a0ebdce19e8f0 /tmp/btcexp.tar.gz" | sha256sum -c -
 
 # Trim js code down from 69MB to 3.3MB by bundling the entire tree into a single minified .js file.
 # This doesn't work for native libraries, but not having them appears to be acceptable.
@@ -38,11 +40,11 @@ s6-setuidgid btcexp bash -xeo pipefail << 'PRIV'
   mkdir ~/dist ~/dist/bin
   cd $HOME/node/lib/node_modules/btc-rpc-explorer
   (cd bin && browserify --node -r jstransformer-markdown-it -x v8 -x node-bitcoin-script -x async_hooks -x hiredis -x event-loop-stats \
-    ./www | fix_pug | terser -cm > ~/dist/bin/www)
+    ./www | fix_pug | terser -c -m reserved=['RpcError'] > ~/dist/bin/www)
   rm -r public/img/screenshots
   mv views public CHANGELOG.md ~/dist/
 PRIV
 
 # Cleanup
 apt-get purge -y git
-rm -rf $HOME/.{npm,cache} $HOME/node/!(bin)
+[ -n "$DEV" ] || rm -rf $HOME/.{npm,cache} $HOME/node/!(bin)

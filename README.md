@@ -1,6 +1,6 @@
 ![eznode](https://raw.githubusercontent.com/shesek/eee/master/docs/img/header.png)
 
-# eznode
+# 𝚎𝚣𝚗𝚘𝚍𝚎
 
 [![Build Status](https://travis-ci.org/shesek/eee.svg?branch=master)](https://travis-ci.org/shesek/eee)
 [![Latest release](https://img.shields.io/github/v/tag/shesek/eee?label=version&color=orange)](https://github.com/ez-org/eznode/releases/latest)
@@ -58,13 +58,14 @@ Support development: [⚡ lightning or ⛓️ on-chain via BTCPay](https://btcpa
 ```bash
 $ docker run -it --rm --name ez -v ~/eznode:/data eznode/eznode TOR=1 XPUB=<xpub>
 ```
-That's it!
 
 This will setup a pruned Bitcoin Core full node, an Electrum server tracking your `<xpub>`, a block explorer and a Tor onion service for secure remote access. All the information you need for accessing them will be shown on startup.
 
-Change `~/eznode` if you'd like to store the node's data files elsewhere. Add `SPECTER=1` to enable Specter Desktop.
+Change `~/eznode` if you'd like to store the node's data files elsewhere (~4.8GB). Add `SPECTER=1` to enable Specter Desktop.
 
 You may set `TRUSTED_FASTSYNC=1` to enable a **trusted** fast-sync. You should [carefully consider if this is what you really want](#fast-sync).
+
+On Windows/macOs, you'll also need to [publish the ports with `-p`](#-connecting-locally).
 
 To experiment on signet, set `NETWORK=signet`.
 
@@ -74,7 +75,10 @@ eznode is pruned by default with prune=550. It'll take up a total of ~4.8GB incl
 
 A pruned node can only scan the recent blocks it still has available for transactions related to your wallet. This makes it primarily suitable for newly created wallets.
 
-If you'd like to use an existing wallet, you'll need to scan for historical transactions by setting `RESCAN_DATE=<yyyy-mm-dd>` to the wallet creation time (err on the too early side) and disable pruning with `PRUNE=0` (or increase it enough to include the rescan date). You may enable pruning after scanning is completed.
+There is, however, an opportunity to scan for your wallet's full history during the initial sync of your node, because each processed block will be scanned for transactions before getting pruned. This requires you to configure your xpubs/descriptors on the first run and will not work with [fast-sync](#fast-sync).
+
+Additional xpubs/descriptors added after your node is synced will be tracked for new activity only.
+If you'd like to retain the ability to rescan existing wallets, disable pruning with `PRUNE=0` (or increase it sufficiently), then initiate an historical rescan by setting `RESCAN_DATE=<yyyy-mm-dd>` to the wallet creation time (err on the too early side to avoid missing transactions).
 
 ## ⚙️ Configuration
 
@@ -181,7 +185,7 @@ You can access the services remotely using Tor onion services, SSH port tunnelin
 
 You can set `AUTH_TOKEN=mySecretPassword` to enable password authentication for everything *except* the Electrum server - BWT's HTTP API, BTC RPC Explorer and Specter.
 
-Using the Electrum server securely over the internet requires an authentication layer like SSH or Tor. An attacker with access to your Electrum server could check whether certain addresses are associated with your wallet, by querying for their history and checking if the server knows about them or not.
+> ⚠️ Using the Electrum server securely over the internet requires an authentication layer like SSH or Tor. An attacker with access to your Electrum server could check whether certain addresses are associated with your wallet, by querying for their history and checking if the server knows about them or not.
 
 When the NGINX-backed SSL is enabled, NGINX will be configured to authenticate the password before forwarding traffic to the backend services. This helps protect against zero-day exploits.
 
@@ -235,7 +239,7 @@ If you'd like to access it remotely, set `BITCOIND_RPC_ONION` to expose it throu
 
 </details>
 
-#### Options (for managed full node)
+#### Options for managed full node
 - `PRUNE=550` (set to `0` to disable pruning)
 - `TXINDEX=0` (enabling this requires pruning to be disabled)
 - `BITCOIND_LISTEN=0` (accept incoming connections on the bitcoin p2p network)
@@ -246,6 +250,10 @@ If you'd like to access it remotely, set `BITCOIND_RPC_ONION` to expose it throu
 - `BITCOIND_LOGS=0` (display bitcoind's logs in the `docker run` output)
 
 A config file may be provided at `/data/bitcoin/bitcoin.conf`.
+
+#### Options for fastsync
+- `TRUSTED_FASTSYNC=0` (enable fast-sync)
+- `FASTSYNC_PARALLEL=1` (parallel connections to use for download)
 
 #### Paths
 - `/bitcoin` (mount the bitcoind datadir from the host to enable cookie authentication)
@@ -501,7 +509,7 @@ To setup, set `SSL=1`, publish the SSL port and make sure to enable token authen
 $ docker run -it -p 443:3443 ... eznode/eznode SSL=1 AUTH_TOKEN=mySecretPassword
 ```
 
-A private key and a self-signed certificate will be automatically generated and saved to `/data/ssl-keys/selfsigned.{key,cert}`. See [`letsnecrypt`](#letsnecrypt) below for a CA-signed cert.
+A private key and a self-signed certificate will be automatically generated and saved to `/data/ssl-keys/selfsigned.{key,cert}`. See [`letsencrypt`](#letsencrypt) below for a CA-signed cert.
 
 The web services will be available on port `3443` under `/bwt/`, `/explorer/` and `/specter/`.
 
@@ -668,7 +676,7 @@ $ git verify-commit HEAD
 # Build
 $ docker build -t eznode .
 
-# Run local image
+# Run using local image
 $ docker run -it ... eznode ...
 ```
 
@@ -690,10 +698,13 @@ $ wget https://raw.githubusercontent.com/ez-org/eznode/latest/SHA256SUMS.asc
 $ gpg --keyserver keyserver.ubuntu.com --recv-keys FCF19B67866562F08A43AAD681F6104CD0F150FC
 $ gpg --verify SHA256SUMS.asc
 
-# Fetch docker image by hash and give it a local alias
-$ docker pull eznode/eznode@sha256:<verified-hash>
-$ docker tag eznode/eznode@sha256:<verified-hash> eznode
+# Get the signed hash for your platform
+$ grep amd64 SHA256SUMS.asc
 
-# Run using alias
+# Fetch docker image by hash and give it a local alias
+$ docker pull eznode/eznode@sha256:<hash>
+$ docker tag eznode/eznode@sha256:<hash> eznode
+
+# Run using local alias
 $ docker run -it ... eznode ...
 ```

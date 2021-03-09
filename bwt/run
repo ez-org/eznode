@@ -5,24 +5,36 @@ source /ez/util.sh
 bool_opt "$BWT" || abort_service
 wait_for_bitcoind || exit 0
 
+bcinfo=$(bitcoin-cli getblockchaininfo)
+
 # General config
 export ELECTRUM_ADDR=$BIND_ADDR:50001
 export HTTP_ADDR=$BIND_ADDR:3060
 export NO_REQUIRE_ADDRESSES=1
 export NOTIFY_FD=5
 export RUST_LOG_STYLE=always
+[ $NETWORK == "regtest" ] && export INITIAL_IMPORT_SIZE=20
+
+# Don't wait for bitcoind to finisy syncing before importing addresses, to give
+# users with pruning enabled a chance to do one full scan during the IBD.
+export IMPORT_WHILE_SYNCING=1
+if [ "$(jq -er .initialblockdownload <<< $bcinfo)" == true ]; then
+  # Incresase the gap limit and reduce the polling interval during the IBD, to
+  # reduce the chances of transactions getting missed.
+  export GAP_LIMIT=${GAP_LIMIT:-300}
+  export POLL_INTERVAL=${POLL_INTERVAL:-5} # seconds
+fi
 
 # Enable real-time updates using unix socket notifications when bitcoind is running locally
 # Also see init.sh and https://github.com/bwt-dev/bwt#real-time-indexing
 if [ "$BITCOIND_MODE" == "local" ]; then
   mkdir -p /run/bwt && chown bwt /run/bwt
-  export UNIX_LISTENER_PATH=/run/bwt/notify-socket
-  export UNIX_LISTENER_MODE=511 # 777 in octal
+  export UNIX_LISTENER_PATH=/run/bwt/notify-socket UNIX_LISTENER_MODE=511 # 777 in octal
   export POLL_INTERVAL=${POLL_INTERVAL:-90} # seconds
 fi
 
 # Disable historical rescan and merkle proofs when pruning is enabled
-if [ "$(bitcoin-cli getblockchaininfo | jq -er .pruned)" == true ]; then
+if [ "$(jq -er .pruned <<< $bcinfo)" == true ]; then
   export RESCAN_SINCE=${RESCAN_SINCE:-now}
   export ELECTRUM_SKIP_MERKLE=${ELECTRUM_SKIP_MERKLE:-1}
 fi

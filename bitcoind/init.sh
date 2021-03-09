@@ -59,7 +59,7 @@ if [ -z "$BITCOIND_URL" ]; then
     export BITCOIND_URL=http://host.docker.internal:$BITCOIND_RPC_PORT/
     net_range=$(cut -d'.' -f1-3 <<< $host_ip).0/24
     info bitcoind "Docker virtual network detected, connecting to host at host.docker.internal ($host_ip)"
-    info bitcoind "You will need to configure your Bitcoin Core with 'rpcbind=$host_ip' and 'rpcallowip=$net_range'," \
+    info bitcoind "You will need to configure your Bitcoin Core with 'rpcbind=127.0.0.1', 'rpcbind=$host_ip' and 'rpcallowip=$net_range'," \
                   "and loosen your firewall (if any) with e.g. 'ufw allow from $net_range to any port $BITCOIND_RPC_PORT'"
 
   # Use the local bitcoind running inside the container, or possibly on the host if `--net host` was used

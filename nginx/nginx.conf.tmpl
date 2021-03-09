@@ -58,7 +58,7 @@ http {
       proxy_pass http://$BIND_ADDR:3060/;
     }
     location /explorer {
-      proxy_pass http://$BIND_ADDR:3002/explorer/;
+      proxy_pass http://$BIND_ADDR:3002/explorer;
     }
     location /specter/ {
       proxy_pass http://$BIND_ADDR:25441/;

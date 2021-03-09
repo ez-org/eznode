@@ -1,0 +1,8 @@
+#!/bin/bash
+set -eo pipefail
+
+# Send command(s) from STDIN to the Tor control socket
+auth=$(cat /var/lib/tor/control_auth_cookie)
+(echo -e 'AUTHENTICATE "'$auth'"' && cat && echo QUIT) \
+  | tee >(sed 's/^AUTHENTICATE .*/AUTHENTICATE */; s/^/> /' > /dev/stderr) \
+  | s6-setuidgid debian-tor nc -U /var/lib/tor/control_socket

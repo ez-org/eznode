@@ -1,0 +1,5 @@
+#!/bin/bash
+set -eo pipefail
+
+# Switch Tor circuits
+echo 'SIGNAL NEWNYM' | tor-control
