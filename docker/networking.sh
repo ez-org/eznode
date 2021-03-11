@@ -44,7 +44,10 @@ if [ -f /ez/hosts ]; then
   info networking "Your node will be available via the '$HOST_ALIAS' hostname"
 fi
 
-# Show instructions for local access on macOS
+# The hostname where ez is reachable from the host
+export EZ_HOST=$([ $HOST_OS == Linux ] && echo ${HOST_ALIAS:-$BIND_ADDR} || echo 127.0.0.1)
+
+# Show instructions for local access on macOS/Windows
 if [ $HOST_OS != Linux ]; then
   info networking "Accessing the container by its virtual IP address is not possible on $HOST_OS." \
                   "To access the services locally, you'll need to publish the ports with \`-p 127.0.0.1:<port>:<port>\` to make them available through localhost." \

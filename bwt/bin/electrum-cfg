@@ -11,7 +11,7 @@ if [ "$(svstat bwt ready)" != true ]; then
   echo -n 'echo >&2 Bitcoin Wallet Tracker is still starting up... configuring anyway. && '
 fi
 
-host=$(printcontenv HOST_ALIAS || printcontenv BIND_ADDR)
+host=$(printcontenv EZ_HOST)
 
 tr '\n' ' ' << CFG
 electrum setconfig server $host:50001:t &&
