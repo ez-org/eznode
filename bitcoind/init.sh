@@ -67,3 +67,6 @@ if [ -z "$BITCOIND_URL" ]; then
     export BITCOIND_URL=http://127.0.0.1:$BITCOIND_RPC_PORT/
   fi
 fi
+
+# Sanity check
+[ -n "$PRUNE_UNTIL" ] && ! bool_opt "$BWT" && error bitcoind The PRUNE_UNTIL option is managed by BWT, which is disabled.

@@ -15,14 +15,13 @@ export NOTIFY_FD=5
 export RUST_LOG_STYLE=always
 [ $NETWORK == "regtest" ] && export INITIAL_IMPORT_SIZE=20
 
-# Don't wait for bitcoind to finisy syncing before importing addresses, to give
+# Don't wait for bitcoind to finish syncing before importing addresses, to give
 # users with pruning enabled a chance to do one full scan during the IBD.
-export IMPORT_WHILE_SYNCING=1
-if [ "$(jq -er .initialblockdownload <<< $bcinfo)" == true ]; then
-  # Incresase the gap limit and reduce the polling interval during the IBD, to
-  # reduce the chances of transactions getting missed.
+export NO_WAIT_SYNC=${NO_WAIT_SYNC:-1}
+if bool_opt "$NO_WAIT_SYNC" && [ "$(jq -er .initialblockdownload <<< $bcinfo)" == true ]; then
+  # Incresase the gap limit during the IBD to reduce the chances of transactions
+  # getting missed
   export GAP_LIMIT=${GAP_LIMIT:-300}
-  export POLL_INTERVAL=${POLL_INTERVAL:-5} # seconds
 fi
 
 # Enable real-time updates using unix socket notifications when bitcoind is running locally
