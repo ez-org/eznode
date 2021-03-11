@@ -31,5 +31,8 @@ nginx -s reload
 info letsencrypt LetsEncrypt certificate set up successfully
 signal_readiness
 
+# Restart letsencrypt whenever nginx gets restarted, so its config will get updated
+(do_once letsencrypt-restart-with && restart_with letsencrypt nginx &) 1>&2
+
 # Try renewing every now and then
 while :; do sleep 2d; certbot renew $LETSENCRYPT_OPT; done 2>&1

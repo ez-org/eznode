@@ -64,9 +64,10 @@ bool_opt "$TRUSTED_FASTSYNC" && source fastsync/fastsync.sh
 mkdir -p $BITCOIND_NETDIR/wallets
 
 # Spawn background subshell to signal readiness and run some post-initialization code
-((
+( (
   # Wait for the RPC to warm up and test connectivity
-  pidfile /tmp/bitcoind-rpcwait.pid bitcoin-cli -rpcwait uptime > /dev/null # TODO timeout
+  pidfile /tmp/bitcoind-rpcwait.pid \
+    bitcoin-cli -rpcwait uptime > /dev/null # TODO timeout
   info bitcoind The Bitcoin Core RPC is ready
   chmod g+r $BITCOIND_NETDIR/.cookie
 

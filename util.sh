@@ -3,7 +3,7 @@
 bool_opt() { [ -n "$1" ] && [ "$1" != 0 ] && [ "$1" != false ] && [ "$1" != off ]; }
 
 wait_for_file() { # (path, timeout=15s)
-  timeout=${2:-15s}
+  local timeout=${2:-15s}
   debug $(basename $PWD) waiting for $1 for up to $timeout
   [ -e "$1" ] \
   || (pfile=$(mktemp) && pidfile $pfile timeout $timeout \
@@ -16,15 +16,16 @@ wait_for_file() { # (path, timeout=15s)
 # Utility wrappers for s6 supervision management
 svstat() { s6-svstat -o $2 /run/s6/services/$1 2> /dev/null || echo unsupervised; }
 svwait() { s6-svwait "${@:2}" /run/s6/services/$1 2> /dev/null; }
+svc() { s6-svc "${@:2}" /run/s6/services/$1; }
 
 wait_for_service() { # (service, timeout=3 minutes)
-  timeout=${2:-180000}
+  local timeout=${2:-180000}
   debug $(basename $PWD) waiting for $1 $([ $timeout -ne 0 ] && echo "for up to $(awk '{print ($1/1000)}' <<< $timeout )s")
   svwait $1 -t $timeout -U || { debug $(basename $PWD) failed waiting for $1 && return 1; }
 }
 
 wait_for_bitcoind() {
-  dir=/run/s6/services/bitcoind
+  local dir=/run/s6/services/bitcoind
   if [ -d $dir ] && [ ! -f $dir/down ]; then
     # Wait for up to 15 minutes. bitcoind may occasionally take a long time to load up.
     # it could take even longer, but the waiting service will restart and try again when this timeout is reached.
@@ -55,10 +56,22 @@ killpidf() { #(pidfile)
   rm "$1"
   # `tail --pid` waits for the process to die (https://stackoverflow.com/a/41613532)
   kill $pid 2> /dev/null && tail --pid=$pid -f /dev/null
+  true
 }
 
 # Helper function to run some code just once (mkdir will fail on subsequent calls)
 do_once() { mkdir /tmp/once.$1 2> /dev/null; }
+
+# Restart `dependent` whenever `dependency` gets restarted
+restart_with() {
+  local dependent=$1
+  local dependency=$2
+  while :; do
+    svwait $dependency -d
+    svwait $dependency -U
+    svc $dependent -r
+  done
+}
 
 BOLD=$(echo -en '\e[1m')
 RED=$(echo -en '\e[31m')

@@ -31,17 +31,19 @@ fi
   | { while read m; do info tor $m; done; killpidf /tmp/tor-tldr.pid; } &) 1>&2
 
 # Spawn background subshell to signal readiness and display service information
-((
-  wait_for_file /var/lib/tor/control_socket 30s
+( (
+  pidfile /tmp/tor-wait.pid \
+    wait_for_file /var/lib/tor/control_socket 30s
   signal_readiness
 
   onion=$(cat /data/tor-hsv/hostname)
+  sleep 2
   bool_opt "$BWT" && info tor Electrum server: $onion:$(bool_opt "$SSL" && echo 50002:s || echo 50001:t) \
                   && info tor HTTP API server: http://$onion:3060/
   bool_opt "$EXPLORER" && info tor Block Explorer: http://$onion:3002/
   bool_opt "$SPECTER" && info tor Specter Desktop: http://$onion:25441/
   bool_opt "$BITCOIND_RPC_ONION" && info tor Bitcoin Core RPC: http://$onion:$BITCOIND_RPC_PORT/
-)&) 1>&2
+) &) 1>&2
 
 # Start service
 info tor Starting Tor onion services...

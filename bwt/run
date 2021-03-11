@@ -19,8 +19,7 @@ export RUST_LOG_STYLE=always
 # users with pruning enabled a chance to do one full scan during the IBD.
 export NO_WAIT_SYNC=${NO_WAIT_SYNC:-1}
 if bool_opt "$NO_WAIT_SYNC" && [ "$(jq -er .initialblockdownload <<< $bcinfo)" == true ]; then
-  # Incresase the gap limit during the IBD to reduce the chances of transactions
-  # getting missed
+  # Incresase the gap limit during the IBD to reduce the chances of transactions getting missed
   export GAP_LIMIT=${GAP_LIMIT:-300}
 fi
 
@@ -57,11 +56,9 @@ if ! bool_opt "$NO_STARTUP_BANNER"; then
   (do_once bwt-banner && wait_for_service bwt 0 && sleep 1 && banner -s &) 1>&2
 fi
 
-# Restart bwt whenever bitcoind is restarted, so it'll pick up the new cookie
-([ "$BITCOIND_MODE" == "local" ] && do_once bwt-restart-job && while :; do
-  svwait bitcoind -d && svwait bitcoind -U
-  [ "$(svstat bwt up,wantedup)" == "true true" ] && service restart bwt
-done &) &> /dev/null
+# Restart bwt whenever bitcoind gets restarted, so it'll pick up the new cookie
+([ "$BITCOIND_MODE" == "local" ] && do_once bwt-restart-job && \
+  restart_with bwt bitcoind &) 1>&2
 
 # Start
 info bwt Starting Bitcoin Wallet Tracker...
