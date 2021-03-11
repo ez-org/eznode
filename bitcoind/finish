@@ -1,8 +1,0 @@
-#!/bin/bash
-set -oe pipefail
-source /ez/default-finish.sh
-
-# Bring the whole container down if bitcoind exited with an error
-if [ $1 -ne 0 ] && [ $1 -ne 256 ]; then
-  s6-svscanctl -t /var/run/s6/services 2> /dev/null
-fi
