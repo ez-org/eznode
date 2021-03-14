@@ -6,8 +6,8 @@
 [![Latest release](https://img.shields.io/github/v/tag/shesek/eee?label=version&color=orange)](https://github.com/ez-org/eznode/releases/latest)
 [![Docker pulls](https://img.shields.io/docker/pulls/eznode/eznode.svg?color=blueviolet)](https://hub.docker.com/r/eznode/eznode)
 [![MIT license](https://img.shields.io/github/license/bwt-dev/bwt.svg?color=yellow)](https://github.com/ez-org/eznode/blob/master/LICENSE)
-![Chat on Telegram](https://img.shields.io/badge/chat-on%20telegram-blue)
-[![Chat on IRC](https://img.shields.io/badge/chat-on%20IRC-green.svg)](https://webchat.freenode.net/?channels=eznode)
+[![Chat on Telegram](https://img.shields.io/badge/chat-on%20telegram-blue)](https://t.me/ez_node)
+[![Chat on IRC](https://img.shields.io/badge/chat-on%20IRC-green.svg)](https://webchat.freenode.net/#eznode)
 
 
 A simple single-container docker setup for a personal bitcoin full node. Featuring:
@@ -20,7 +20,7 @@ A simple single-container docker setup for a personal bitcoin full node. Featuri
 
 Why eznode?
 
-- Simple, hassle-free setup with minimal configuration
+- Simple, hassle-free setup
 - Lightweight (a single 115 MB docker image)
 - Pruning-friendly (requires <5GB of storage)
 - Suitable for a dedicated box, but doesn't require one
@@ -37,7 +37,7 @@ docker run -it --rm --name ez -v ~/eznode:/data eznode/eznode TOR=1 XPUB=<xpub>
 
 This will setup a pruned Bitcoin Core full node, an Electrum server tracking your `<xpub>`, a block explorer and a Tor onion service for secure remote access. All the information you need for accessing them will be shown on startup.
 
-Change `~/eznode` if you'd like to store the node's data files elsewhere. On Windows, you can use `$env:AppData\eznode` to store them in `C:\Users\<USER>\AppData\Roaming`. They will require ~4.8GB of free space.
+Change `~/eznode` if you'd like to store the node's data files elsewhere. On Windows, you can use `$env:AppData\eznode` to store them in `C:\Users\<USER>\AppData\Roaming`. They require ~4.8GB of free space.
 
 On Windows/macOS, you'll need to [publish the ports with `-p`](#-connecting-locally).
 
@@ -53,11 +53,11 @@ To experiment on signet, set `NETWORK=signet`.
 - [⚙️ Configuration](docs#%EF%B8%8F-configuration)
 - [👩‍💻 Accessing the services](docs#-accessing-the-services)
   - [💻 Locally](docs#-connecting-locally)
-  - [🌐 Remotely](docs/remote.md)
+  - [🌐 Remotely](docs#-connecting-remotely)
   - [🔐 Authentication](docs#-authentication)
 - [🎁 Packages](docs#-packages)
   - [Bitcoin Core](docs#bitcoin-core) &middot; [BWT/Electrum](docs#bitcoin-wallet-tracker) &middot; [RPC Explorer](docs#btc-rpc-explorer) &middot; [Specter](docs#specter-desktop)
-  - [Tor Onion](docs/remote.md#tor) &middot; [Dropbear/SSH](docs/remote.md#dropbear) &middot; [NGINX/SSL](docs/remote.md#nginx) &middot; [Let's Encrypt](docs/remote.md#lets-encrypt)
+  - [Tor Onion](docs#tor) &middot; [Dropbear/SSH](docs#dropbear) &middot; [NGINX/SSL](docs#nginx) &middot; [Let's Encrypt](docs#lets-encrypt)
 - [🔧 Server management](docs#-server-management)
   - [😈 Daemonizing](docs#-daemonizing)
   - [🕹️ Controlling services](docs#%EF%B8%8F-controlling-services)
