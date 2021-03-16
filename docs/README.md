@@ -84,13 +84,13 @@ eznode can be configured in several ways:
    > The config file is `source`ed and may contain variables, bash scripting and comments.
 
 2. Using a list of `KEY=VALUE` pairs tucked at the end of `docker run`:
-   ```
-   $ docker run -it ... eznode/eznode NETWORK=signet
+   ```bash
+   docker run -it ... eznode/eznode NETWORK=signet
    ```
 
 3. Using the standard `-e`/`--env` and `--env-file` arguments for `docker run`:
-   ```
-   $ docker run -it ... -e NETWORK=signet eznode/eznode
+   ```bash
+   docker run -it ... -e NETWORK=signet eznode/eznode
    ```
 
 Global options:
@@ -120,13 +120,13 @@ On Linux, you can access the services from the same machine running eznode by co
 You can optionally create an `ez` hostname alias for easier access to the services (for example http://ez:3002/) by mounting your hosts file with `-v /etc/hosts:/ez/hosts`. A new entry with the virtual IP address will be added automatically. You can also do this manually:
 
 ```bash
-$ echo "$(docker inspect -f '{{.NetworkSettings.IPAddress}}' ez) ez" | sudo tee -a /etc/hosts
+echo "$(docker inspect -f '{{.NetworkSettings.IPAddress}}' ez) ez" | sudo tee -a /etc/hosts
 ```
 
 On macOS/Windows, you'll have to publish the ports with `-p 127.0.0.1:<port>:<port>` to make them available through `localhost`. Accessing them through the virtual IP address will [not](https://docs.docker.com/docker-for-mac/networking/#known-limitations-use-cases-and-workarounds) [work](https://docs.docker.com/docker-for-windows/networking/#known-limitations-use-cases-and-workarounds). For example, to make the block explorer available at http://localhost:3002/, use:
 
 ```bash
-$ docker run -it -p 127.0.0.1:3002:3002 --rm --name ez -v ~/eznode:/data eznode/eznode
+docker run -it -p 127.0.0.1:3002:3002 --rm --name ez -v ~/eznode:/data eznode/eznode
 ```
 
 The ports are: `8332` for the Bitcoin Core RPC, `50001` for the BWT Electrum server, `3060` for the HTTP API, `3002` for the block explorer and `25441` for Specter. They are unencrypted and not suitable for access over the internet.
@@ -203,7 +203,7 @@ A fast-synced node [is not able](#%EF%B8%8F-pruning) to scan for historical wall
 If you already have a Bitcoin Core instance running on the same machine, you can connect eznode to it using cookie authentication by mounting the datadir into `/bitcoin`:
 
 ```bash
-$ docker run -v ~/.bitcoin:/bitcoin:ro -it ... eznode/eznode
+docker run -v ~/.bitcoin:/bitcoin:ro -it ... eznode/eznode
 ```
 
 > On Linux, you'll need to add `--add-host host.docker.internal:host-gateway` to make the host's address discoverable from within the container. On Windows, change `~/.bitcoin` to `$env:AppData\Bitcoin`.
@@ -219,11 +219,11 @@ If your node is running remotely, you can configure its URL and RPC credentials 
 <details>
  <summary>Expand instructions...</summary><br>
 
-To issue RPC commands against eznode's managed Bitcoin Core instance, use `$ docker exec ez bitcoin-cli <command>` (see [*Server management*](#-server-management)).
+To issue RPC commands against eznode's managed Bitcoin Core instance, use `docker exec ez bitcoin-cli <command>` (see [*Server management*](#-server-management)).
 
 To connect to the Bitcoin Core RPC from your host, set `BITCOIND_RPC_ACCESS=<user:pwd>` to open the RPC server for external access using password-based authentication.
 
-On macOS/Windows, you'll need to publish the RPC port with `-p 127.0.0.1:8332:8332` to make it available through `localhost`. On Linux you can access it directly through the container IP address or using the `ez` alias (see [*Connecting Locally*](#-connecting-locally)).
+On macOS/Windows, you'll need to publish the RPC port with `-p 127.0.0.1:8332:8332` to make it available through `localhost`. On Linux you can access it directly through the container's IP address or using the `ez` alias (see [*Connecting Locally*](#-connecting-locally)).
 
 If you'd like to access the RPC remotely, set `BITCOIND_RPC_ONION` to expose it through an [onion service](#tor) or setup an [SSH tunnel](#dropbear).
 
@@ -272,15 +272,15 @@ To use an existing wallet, read the [instructions here](#%EF%B8%8F-pruning) firs
 
 Grab your xpub from `Wallet` > `Information` and add it to your config file (`~/eznode/config`) as a new line with `XPUB=<my-xpub>`.
 
-Restart eznode, wait for BWT to start up and run `electrum $(ez electrum-args)` to start Electrum and connect it with your local node (assumes the [`ez` alias described here](#-server-management)). Or you can do this manually:
+Restart eznode, wait for BWT to start up and run `electrum $(docker exec ez electrum-args)` to start Electrum and connect it with your local node. Or you can do this manually:
 
 ```
-$ electrum --oneserver --server ez:50001:t --skipmerklecheck
+electrum --oneserver --server ez:50001:t --skipmerklecheck
 ```
 
 > If you don't have the [`ez` hostname](#-connecting-locally) set up, replace `ez` with the IP address shown on startup (`electrum-args` does this automatically). The [`skipmerklecheck`](https://github.com/spesmilo/electrum/pull/4957) option is needed to support pruning.
 
-To configure Electrum to use eznode by default, run `ez electrum-cfg | bash -x`. This will issue `electrum setconfig` commands (you can run without `| bash` to see them).
+To configure Electrum to use eznode by default, run `docker exec ez electrum-cfg | bash -x`. This will issue `electrum setconfig` commands (you can run without `| bash` to see them).
 
 If you're connecting remotely, you'll need to setup [Tor Onion or an SSH tunnel](#-connecting-remotely) for secure access.
 </details>
@@ -423,7 +423,7 @@ Enable `SSHD`, publish the SSH port (2222) for remote access and give the contai
 ![](https://raw.githubusercontent.com/shesek/eee/master/docs/img/ssh.png)
 
 
-> You might need to open port `2222` on your firewall (e.g. `$ ufw allow to any port 2222`).
+> You might need to open port `2222` on your firewall (e.g. `ufw allow to any port 2222`).
 
 #### Client set-up
 
@@ -475,11 +475,11 @@ Match User satoshi
   GatewayPorts clientspecified
 ```
 
-And reload the SSH server (e.g. `$ service ssh reload`).
+And reload the SSH server (e.g. `service ssh reload`).
 
 Then, on your eznode host, run:
 ```bash
-$ ssh -fTN -R :2222:localhost:2222 satoshi@cheapvps.com
+ssh -fTN -R :2222:localhost:2222 satoshi@cheapvps.com
 ```
 
 You will now be able to connect to the eznode SSH server through `cheapvps.com:2222`. You can setup SSH tunnels to the services through it in the same manner explained above.
@@ -508,7 +508,7 @@ NGINX-powered SSL terminating reverse proxy. Provides encryption, but not authen
 To setup, set `SSL=1`, publish the SSL port and make sure to enable authentication:
 
 ```bash
-$ docker run -it -p 443:3443 ... eznode/eznode SSL=1 AUTH_TOKEN=mySecretPassword
+docker run -it -p 443:3443 ... eznode/eznode SSL=1 AUTH_TOKEN=mySecretPassword
 ```
 
 A private key and a self-signed certificate will be automatically generated and saved to `/data/ssl-keys/selfsigned.{key,cert}`. See [*Let's Encrypt*](#lets-encrypt) below for a CA-signed cert.
@@ -537,10 +537,10 @@ When `AUTH_TOKEN` is set, NGINX will be configured to authenticate the password 
 To obtain a CA-signed certificate from LetsEncrypt, set `SSL=1 SSL_DOMAIN=<domain>` and publish the HTTP/S ports for remote access, like so:
 
 ```bash
-$ docker run -it -p 443:3443 -p 80:8080 ... eznode/eznode SSL=1 SSL_DOMAIN=mynodebox.com
+docker run -it -p 443:3443 -p 80:8080 ... eznode/eznode SSL=1 SSL_DOMAIN=mynodebox.com
 ```
 
-> You might need to open the HTTP/S ports on your firewall (e.g. `$ ufw allow to any port 80,443`).
+> You might need to open the HTTP/S ports on your firewall (e.g. `ufw allow to any port 80,443`).
 
 
 #### With existing webserver
@@ -592,10 +592,10 @@ To manage the server remotely, you can enable the [SSH service](#dropbear) with 
 To run the docker container as a background daemon and have it automatically run on start-up, change `docker run` to use `-d --restart unless-stopped` instead of  `-it --rm`. For example:
 
 ```bash
-$ docker run -d --restart unless-stopped --name ez -v ~/eznode:/data eznode/eznode
+docker run -d --restart unless-stopped --name ez -v ~/eznode:/data eznode/eznode
 ```
 
-You can control the background container using `$ docker stop|start|restart ez`.
+You can control the background container using `docker stop|start|restart ez`.
 
 ## 🕹️ Controlling services
 
@@ -605,16 +605,16 @@ A [CLI utility](https://github.com/ez-org/eznode/blob/master/s6/service) wrapper
 
 ```bash
 # Display an overview of all services
-$ ez status
+ez status
 
 # Display more information
-$ ez status -v
+ez status -v
 
 # Display the status of some service(s)
-$ ez status <services...>
+ez status <services...>
 
 # Service management
-$ ez start|stop|restart <services...>
+ez start|stop|restart <services...>
 ```
 
 <img src="https://raw.githubusercontent.com/shesek/eee/master/docs/img/services.png" width="550">
@@ -622,7 +622,7 @@ $ ez start|stop|restart <services...>
 
 ## 🖥️ Terminal display
 
-You can setup a simple textual dashboard display with information about your node and the Bitcoin network using `$ watch -t -n10 docker exec ez banner`.
+You can setup a simple textual dashboard display with information about your node and the Bitcoin network using `watch -t -n10 docker exec ez banner`.
 
 It will look something like this:
 
@@ -630,30 +630,30 @@ It will look something like this:
 
 ## 📝 Viewing logs
 
-The main logs are displayed in the `docker run` output, including some select important log messages across all services. If you're running the container in the background, you can use `$ docker logs -f ez` to view them.
+The main logs are displayed in the `docker run` output, including some select important log messages across all services. If you're running the container in the background, you can use `docker logs -f ez` to view them.
 
-`$ ez logs` will stream full logs from all the services (`tail -f`-like). You can use `$ ez logs <services...>` to select specific services.
+`ez logs` will stream full logs from all the services (`tail -f`-like). You can use `ez logs <services...>` to select specific services.
 
-`-n` sets how many last log lines are returned initially (defaults to 8). `-c` reads the logs without following them. For example: `$ ez logs -c -n1000 bitcoind`.
+`-n` sets how many last log lines are returned initially (defaults to 8). `-c` reads the logs without following them. For example: `ez logs -c -n1000 bitcoind`.
 
 You can request that some services will be logged in the main `docker run` output using the following flags: `BITCOIND_LOGS`, `BWT_LOGS`, `EXPLORER_LOGS`, `SPECTER_LOGS`, `TOR_LOGS`, `SSHD_LOGS` and `LETSENCRYPT_LOGS`.
 
 ## 🔄 Updating
 
-Updating your eznode is a simple matter of:
+To update your ezonde, run:
 
 ```bash
-$ docker pull eznode/eznode
+docker pull eznode/eznode
 ```
 
-And re-running `docker run`.
+And re-start the `docker run` command.
 
 ## 💾 Backing up
 
 All of the important directories that needs to be backed up are symlinked in `/important`. You can create a backup `tar.gz` file with everything using the following command:
 
 ```bash
-$ ez backup > ez-backup.tar.gz
+ez backup > ez-backup.tar.gz
 ```
 
 > `backup` is a shortcut for `tar czvhf - /important`.
@@ -673,20 +673,20 @@ Everything that needs to be backed up is kept within the directory mounted to `/
 
 ```bash
 # Clone repo and verify signature
-$ git clone https://github.com/ez-org/eznode && cd eznode
-$ git checkout <tag>
-$ git verify-commit HEAD
+git clone https://github.com/ez-org/eznode && cd eznode
+git checkout <tag>
+git verify-commit HEAD
 
 # Build
-$ docker build -t eznode .
+docker build -t eznode .
 
 # Run using local image
-$ docker run -it ... eznode ...
+docker run -it ... eznode ...
 ```
 
 All the files retrieved during the build are verified by their hash.
 
-To build the ARM32v7/ARM64v8 images, run `$ ./docker/build-arch.sh [arm|arm64] -t eznode`. Cross-compilation requires [qemu-user-static](https://github.com/multiarch/qemu-user-static) to be installed.
+To build the ARM32v7/ARM64v8 images, run `./docker/build-arch.sh [arm|arm64] -t eznode`. Cross-compilation requires [qemu-user-static](https://github.com/multiarch/qemu-user-static) to be installed.
 
 You can upgrade third-party packages yourself by setting the following `--build-arg`s: `BITCOIND_{VERSION,SHA256}`, `BWT_{VERSION,SHA256}`, `BTCEXP_{VERSION,SHA256}` and `SPECTER_{VERSION,SHA256}`.
 
@@ -698,17 +698,17 @@ The images are signed by Nadav Ivgi (@shesek). The public key can be verified on
 
 ```bash
 # Verify signature
-$ wget https://raw.githubusercontent.com/ez-org/eznode/latest/SHA256SUMS.asc
-$ gpg --keyserver keyserver.ubuntu.com --recv-keys FCF19B67866562F08A43AAD681F6104CD0F150FC
-$ gpg --verify SHA256SUMS.asc
+wget https://raw.githubusercontent.com/ez-org/eznode/latest/SHA256SUMS.asc
+gpg --keyserver keyserver.ubuntu.com --recv-keys FCF19B67866562F08A43AAD681F6104CD0F150FC
+gpg --verify SHA256SUMS.asc
 
 # Get the signed hash for your platform
-$ grep amd64 SHA256SUMS.asc
+grep amd64 SHA256SUMS.asc
 
 # Fetch docker image by hash and give it a local alias
-$ docker pull eznode/eznode@sha256:<hash>
-$ docker tag eznode/eznode@sha256:<hash> eznode
+docker pull eznode/eznode@sha256:<hash>
+docker tag eznode/eznode@sha256:<hash> eznode
 
 # Run using local alias
-$ docker run -it ... eznode ...
+docker run -it ... eznode ...
 ```
