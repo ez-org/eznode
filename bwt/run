@@ -44,9 +44,9 @@ if [ -z "$BITCOIND_WALLET" ]; then
 fi
 
 # Configure standalone addresses to track
-if [ -f /data/watch-addresses.txt ]; then
-  cp /data/watch-addresses.txt /home/bwt/ && chown bwt /home/bwt/watch-addresses.txt
-  export ADDRESSES_FILE=/home/bwt/watch-addresses.txt
+if [ -f /data/track-addresses.txt ]; then
+  export ADDRESSES_FILE=/home/bwt/addresses.txt
+  cp /data/track-addresses.txt $ADDRESSES_FILE && chown bwt $ADDRESSES_FILE
 fi
 
 # Suppress bwt's default startup banner and display it on our own,
@@ -57,8 +57,8 @@ if ! bool_opt "$NO_STARTUP_BANNER"; then
 fi
 
 # Restart bwt whenever bitcoind gets restarted, so it'll pick up the new cookie
-([ "$BITCOIND_MODE" == "local" ] && do_once bwt-restart-job && \
-  restart_with bwt bitcoind &) 1>&2
+([ "$BITCOIND_MODE" == "local" ] && do_once bwt-restart-with \
+  && restart_with bwt bitcoind &) 1>&2
 
 # Start
 info bwt Starting Bitcoin Wallet Tracker...

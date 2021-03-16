@@ -8,7 +8,7 @@ wait_for_file() { # (path, timeout=15s)
   [ -e "$1" ] \
   || (pfile=$(mktemp) && pidfile $pfile timeout $timeout \
     inotifywait -e create,moved_to --format '%f' -m "$(dirname "$1")" 2>&1 \
-    | { grep -qx 'Watches established.' && [ -f "$1" ] || grep -qFx "$(basename "$1")" && killpidf $pfile; }) \
+    | { grep -qx 'Watches established.' && [ -e "$1" ] || grep -qFx "$(basename "$1")" && killpidf $pfile; }) \
   || [ -e "$1" ] \
   || { warn $(basename $PWD) $1 did not appear && return 1; }
 }
