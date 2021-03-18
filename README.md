@@ -39,9 +39,9 @@ This will setup a pruned Bitcoin Core full node, an Electrum server tracking you
 
 Change `~/eznode` if you'd like to store the node's data files elsewhere. On Windows, you can use `$env:AppData\eznode` to store them in `C:\Users\<USER>\AppData\Roaming`. They require ~4.8GB of free space.
 
-On Windows/macOS, you'll need to [publish the ports with `-p`](#-connecting-locally).
+On Windows/macOS, you'll need to [publish the ports with `-p`](docs#-connecting-locally).
 
-Set `TRUSTED_FASTSYNC=1` to enable the [*trusted* fast-sync](#fast-sync) mode. You should carefully consider the implications and avoid this if possible.
+Set `TRUSTED_FASTSYNC=1` to enable the [*trusted* fast-sync](docs#fast-sync) mode. You should carefully consider the implications and avoid this if possible.
 
 To enable Specter Desktop, set `SPECTER=1`.
 

@@ -48,14 +48,14 @@ To experiment on signet, set `NETWORK=signet`.
 
 eznode is pruned by default with prune=550. It'll take up a total of ~4.8GB including the UTXO set and indexes (as of March 2021).
 
-A pruned node can only scan the recent blocks it still has available for transactions related to your wallet. This makes it primarily suitable for newly created wallets.
+A pruned node can only scan the recent blocks it still has available for transactions related to your wallet. This makes it primarily suitable for use with newly created wallets.
 
 There is, however, an opportunity to scan for your wallet's full history during the initial sync of your node, by scanning the blocks before they get pruned. This requires your xpubs/descriptors to be [configured](#%EF%B8%8F-configuration) during the initial sync and will not work with [fast-sync](#fast-sync).
 
 Additional xpubs/descriptors added after your node is synced will by default be tracked for new activity only.
-If you'd like to retain the ability to rescan wallets with historical activity, set `PRUNE=0` to disable pruning entirely or `PRUNE_UNTIL=<yyyy-mm-dd>` to only prune blocks before the given date.
+If you'd like to retain the ability to rescan wallets with historical activity, set `PRUNE_UNTIL=<yyyy-mm-dd>` to keep blocks after the given date or `PRUNE=0` to disable pruning entirely. *(Make sure to add these options in your config file so they don't get lost.)*
 
-Then, when adding new xpubs/descriptors, you could initiate a rescan by setting `RESCAN_SINCE=<yyyy-mm-dd>` to the wallet creation time (err on the too early side to avoid missing transactions). It has to be more recent than `PRUNE_UNTIL`.
+Then, when adding new xpubs/descriptors, you could initiate a rescan by setting `RESCAN_SINCE=<yyyy-mm-dd>` to the wallet creation time (err on the too early side to avoid missing transactions). It will have to be more recent than `PRUNE_UNTIL`.
 
 ## ⚙️ Configuration
 
@@ -161,7 +161,7 @@ You can access your eznode remotely using Tor onion services, SSH port tunneling
 
   On the plus side, SSL works on nearly all end devices with no special software or configuration. But it still requires setting up port forwarding on the server.
   
-  Set `SSL=1` to enable with a self-signed cert, add `SSL_DOMAIN=mydomain.com` to obtain a LetsEncrypt certificate. See [more details and options below](#dropbear).
+  Set `SSL=1` to enable with a self-signed cert, add `SSL_DOMAIN=mydomain.com` to obtain a Let's Encrypt certificate. See [more details and options below](#dropbear).
 
 > If you're connecting directly to your server's IP address (i.e. not via onion or a [reverse SSH tunnel](#punch-through-nats-with-a-reverse-ssh-tunnel)) and don't have a static IP address, you'll probably want to use a dynamic DNS service like [afraid.org](https://freedns.afraid.org/).
 
@@ -171,7 +171,7 @@ You can access your eznode remotely using Tor onion services, SSH port tunneling
 
 You can set `AUTH_TOKEN=mySecretPassword` to enable password authentication for everything *except* the Electrum server - BWT's HTTP API, BTC RPC Explorer and Specter.
 
-> ⚠️ Using the Electrum server securely over the internet requires an authentication layer like SSH or Tor. An attacker with access to your Electrum server could check whether certain addresses are associated with your wallet, by querying for their history and checking if the server knows about them or not.
+> ⚠️ Using the Electrum server securely over the internet requires an authentication layer like [SSH](#dropbear) or [Tor](#tor). An attacker with access to your Electrum server could check whether certain addresses are associated with your wallet, by querying for their history and checking if the server knows about them or not.
 
 When the NGINX-backed SSL is enabled, NGINX will be configured to authenticate the password before forwarding traffic to the backend services. This helps protect against zero-day exploits.
 
@@ -187,9 +187,9 @@ Full bitcoin node. [Pruned](#%EF%B8%8F-pruning) by default.
 
 To enable fast-sync, set `TRUSTED_FASTSYNC=1`. This will download a recent pruned datadir snapshot from [prunednode.today](https://prunednode.today/) and start syncing from that instead of from scratch.
 
-Using this option requires **trusting** the distributor of the snapshot. A malicious distributor could *feed you with invalid chain history and lead you to accept fake coins*. Please consider waiting some more for a full sync to avoid taking this risk.
+This can get your node synced up 10-60 minutes (depending on how recent the snapshot is), but requires ⚠ **trusting** the distributor of the snapshot. A malicious distributor could *feed you with invalid chain history and lead you to accept fake coins*. Please consider waiting some more for a full sync to avoid taking this risk.
 
-A fast-synced node [is not able](#%EF%B8%8F-pruning) to scan for historical wallet transactions and is primarily suitable for use with newly created wallets.
+A fast-synced node [is not able](#%EF%B8%8F-pruning) to scan for historical wallet transactions and can therefore only be used with newly created wallets.
 
 [prunednode.today](https://prunednode.today/) is maintained by the [Specter Desktop](https://github.com/cryptoadvance/specter-desktop) team and signed by [Stepan Snigirev](https://stepansnigirev.com/).
 
@@ -223,7 +223,7 @@ To issue RPC commands against eznode's managed Bitcoin Core instance, use `docke
 
 To connect to the Bitcoin Core RPC from your host, set `BITCOIND_RPC_ACCESS=<user:pwd>` to open the RPC server for external access using password-based authentication.
 
-On macOS/Windows, you'll need to publish the RPC port with `-p 127.0.0.1:8332:8332` to make it available through `localhost`. On Linux you can access it directly through the container's IP address or using the `ez` alias (see [*Connecting Locally*](#-connecting-locally)).
+On macOS/Windows, you'll also need to publish the RPC port with `-p 127.0.0.1:8332:8332` to make it available through `localhost`. On Linux you can access it directly through the container's IP address or using the `ez` alias (see [*Connecting Locally*](#-connecting-locally)).
 
 If you'd like to access the RPC remotely, set `BITCOIND_RPC_ONION` to expose it through an [onion service](#tor) or setup an [SSH tunnel](#dropbear).
 
@@ -240,7 +240,7 @@ If you'd like to access the RPC remotely, set `BITCOIND_RPC_ONION` to expose it 
 - `BITCOIND_OPTS=<none>` (custom cli options for bitcoind)
 - `BITCOIND_LOGS=0` (display bitcoind's logs in the `docker run` output)
 
-A config file may also be provided at `/data/bitcoin/bitcoin.conf`.
+A config file may also be provided at `/data/bitcoin/bitcoin.conf`, but the options above will take priority over it.
 
 #### Options for fastsync
 - `TRUSTED_FASTSYNC=0` (enable fast-sync)
@@ -259,16 +259,18 @@ A config file may also be provided at `/data/bitcoin/bitcoin.conf`.
 
 [Bitcoin Wallet Tracker](https://bwt.dev/) is a personal wallet tracker that watches your wallet's activity, available as an Electrum RPC server and an [HTTP API](https://github.com/bwt-dev/bwt#http-api).
 
-BWT keeps an index of your wallet transactions only. To make your wallet activity available, you'll have to configure your `XPUB`/`DESCRIPTOR`.
-If you have multiple, you can use `XPUB_*`/`DESC_*` (e.g. `XPUB_1` or `DESC_CHANGE`).
+BWT keeps an index of your wallet transactions only. To make your wallet activity available, you'll need to [configure](#%EF%B8%8F-configuration) your `XPUB`s/`DESCRIPTOR`s (use `XPUB_*`/`DESC_*` if you have multiple, e.g. `XPUB_1` or `DESC_CHANGE`).
 
+
+With pruning enabled (the default), starting with a new wallet is the easiest.
+A new wallet is also recommended for privacy reasons, if your addresses were previously exposed to public Electrum servers.
+To use an existing wallet, refer to the [instructions here](#%EF%B8%8F-pruning).
 
 #### Electurm wallet setup
 <details>
  <summary>Expand instructions...</summary><br>
 
-With pruning enabled (the default), starting with a new wallet is the easiest. Make sure you don't connect to public servers while creating it (you can start Electrum with `--offline` to ensure that).
-To use an existing wallet, read the [instructions here](#%EF%B8%8F-pruning) first.
+If you're creating a new wallet, make sure you don't connect to public servers while doing it, to avoid exposing your addresses. You can start Electrum with `--offline` to ensure that.
 
 Grab your xpub from `Wallet` > `Information` and add it to your config file (`~/eznode/config`) as a new line with `XPUB=<my-xpub>`.
 
@@ -298,11 +300,11 @@ The plugin will run a separate BWT instance that connects directly to Bitcoin Co
 #### Options
 - `BWT=1` (enabled by default, set to `0` to turn off)
 - `XPUB`/`XPUB_*` (xpubs/ypubs/zpubs to track)
-- `DESCRIPTOR`/`DESCRIPTOR_*`/`DESC_*` (output script descriptors to track)
-- `RESCAN_SINCE=now` (date to begin rescanning for historical wallet transactions in `YYYY-MM-DD` format. By default, only new transactions will be visible.)
+- `DESCRIPTOR`/`DESCRIPTOR_*`/`DESC_*` (script descriptors to track)
+- `RESCAN_SINCE=now` (date to begin rescanning for historical wallet transactions in `YYYY-MM-DD` format. rescan is disabled by default.)
 - `BITCOIND_WALLET=ez-bwt` (bitcoind wallet to use)
 - `CREATE_WALLET_IF_MISSING=1` (automatically create a new bitcoind wallet)
-- `GAP_LIMIT=20` (the gap limit for address import)
+- `GAP_LIMIT=20` (the [gap limit](https://github.com/bwt-dev/bwt#gap-limit) for tracking derived addresses)
 - `FORCE_RESCAN=0` (force rescanning for historical transactions, even if the addresses were already previously imported)
 - `HTTP_CORS=<none>` (allowed cross-origins for the http api server)
 - `WEBHOOK_URLS=<none>` (URLs to notify with real-time wallet events)
@@ -316,7 +318,7 @@ The full list of BWT's config options is [available here](https://github.com/bwt
 - `3060` (HTTP API)
 
 #### Paths
-- `/data/track-addresses.txt` (optional list of standalone addresses to track)
+- `/data/track-addresses.txt` (optional file with standalone addresses to track)
 
 ## BTC RPC Explorer
 
@@ -709,6 +711,6 @@ grep amd64 SHA256SUMS.asc
 docker pull eznode/eznode@sha256:<hash>
 docker tag eznode/eznode@sha256:<hash> eznode
 
-# Run using local alias
+# Run using the local alias
 docker run -it ... eznode ...
 ```
