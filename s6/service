@@ -44,7 +44,7 @@ case "$cmd" in
     else
       trap 'kill 0' EXIT
       for service in $@; do if [ -f $service/log/location ]; then
-        $0 logs $logargs $service 2> /dev/null | sed -u "s|^| ${BOLD}$service${RESTORE} |" &
+        $0 logs $logargs $service 2> /dev/null | sed -u "s~^~ ${BOLD}${CYAN}$service |${RESTORE} ~" &
       fi; done
       wait && exit
     fi

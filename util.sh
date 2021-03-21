@@ -91,7 +91,7 @@ error() {
   exit 1
 }
 warn() {
-  echo >&2 " ${YELLOW}${BOLD}WARN${RESTORE}  ${BOLD}${1}${RESTORE} > ${@:2}"
+  echo >&2 " ${YELLOW}WARN${RESTORE}  ${BOLD}${1}${RESTORE} > ${@:2}"
 }
 info() {
   if [ "$1" == "-n" ]; then local n="$1"; shift; fi
@@ -102,5 +102,5 @@ debug() {
   echo >&2 $n " ${BLUE}DEBUG${RESTORE} ${BOLD}${1}${RESTORE} > ${@:2}"
 }
 log_prefix() {
-  exec sed "s/^/ ${BOLD}$1${RESTORE} > /"
+  exec sed "s/^/ ${BOLD}${CYAN}$1 |${RESTORE} /"
 }
