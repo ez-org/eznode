@@ -78,5 +78,6 @@ if [ -z "$BITCOIND_URL" ]; then
   fi
 fi
 
-# Sanity check
+# Sanity checks
 [ -n "$PRUNE_UNTIL" ] && ! bool_opt "$BWT" && error bitcoind The PRUNE_UNTIL option is managed by BWT, which is disabled.
+[ -n "$FASTSYNC_PARALLEL" ] && ! bool_opt "$TRUSTED_FASTSYNC" && error bitcoind FASTSYNC_PARALLEL was configured but TRUSTED_FASTSYNC is not enabled
