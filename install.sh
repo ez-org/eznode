@@ -24,5 +24,8 @@ for name in $(grep -E -o '[a-z0-9-]+' <<< $INSTALL); do
   install $name
 done
 
+# make 'ez <cmd>' delegate to '<cmd>', in case users accidentally use it inside the container
+echo -e '#!/bin/sh\nexec "$@"' > /ez/bin/ez && chmod +x /ez/bin/ez
+
 apt-get autoremove --purge -y && apt-get clean
 rm -rf /var/lib/apt/lists/* /var/cache/* /usr/local/share/{fonts,man} /usr/share/{fonts,doc}
