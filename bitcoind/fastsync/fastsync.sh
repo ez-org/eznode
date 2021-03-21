@@ -4,7 +4,7 @@
 # $ gpg --no-default-keyring --keyring ./stepan-snigirev.keyring --import <(curl https://stepansnigirev.com/ss-specter-release.asc)
 
 [ "$NETWORK" == "bitcoin" ] || error fastsync TRUSTED_FASTSYNC can only be used with bitcoin mainnet
-[ "$PRUNE" -ge 550 ] && [ "$PRUNE" -le 1000 ] || error fastsync TRUSTED_FASTSYNC must be used with prune '<=' 1000
+[ "$PRUNE" -ge 550 ] && [ "$PRUNE" -le 1000 ] || error fastsync TRUSTED_FASTSYNC must be used with a PRUNE value between 550 and 1000
 
 if [ -d /data/bitcoin/blocks ]; then
   info fastsync Found existing datadir at /data/bitcoin. Delete it to force a re-download of the fastsync snapshot.
