@@ -53,16 +53,26 @@ fi
 # Set the default BITCOIND_URL
 if [ -z "$BITCOIND_URL" ]; then
   # Use host.docker.internal as the default remote bitcoind URL. It'll resolve to the
-  # host's IP address when `--add-host host.docker.internal:host-gateway` is set.
+  # host's IP address (requires `--add-host host.docker.internal:host-gateway` on Linux).
   host_ip=$(getent hosts host.docker.internal | cut -d' ' -f1 2> /dev/null || return 0)
   if [ $BITCOIND_MODE == "remote" ] && [ -n "$host_ip" ]; then
     export BITCOIND_URL=http://host.docker.internal:$BITCOIND_RPC_PORT/
     net_range=$(cut -d'.' -f1-3 <<< $host_ip).0/24
-    info bitcoind "Docker virtual network detected, connecting to host at host.docker.internal ($host_ip)"
+    info bitcoind "Docker host address detected at host.docker.internal ($host_ip)"
     info bitcoind "You will need to configure your Bitcoin Core with 'rpcbind=127.0.0.1', 'rpcbind=$host_ip' and 'rpcallowip=$net_range'," \
                   "and loosen your firewall (if any) with e.g. 'ufw allow from $net_range to any port $BITCOIND_RPC_PORT'"
 
-  # Use the local bitcoind running inside the container, or possibly on the host if `--net host` was used
+  # Credentials were provided for a remote node, but no address could be determined
+  elif [ $BITCOIND_MODE == "remote" ]; then
+    if [ -d /bitcoin ]; then
+      error bitcoind "The Bitcoin Core data dir was mounted from the host, but the host's IP address could not be determined." \
+                      "Start docker with '--add-host host.docker.internal:host-gateway' to enable automatic discovery, or explicitly set BITCOIND_URL." \
+                      "If you're running in '--net host' mode, set it to http://127.0.0.1:$BITCOIND_RPC_PORT/."
+    else
+      error bitcoind "The Bitcoin Core RPC credentials were provided with BITCOIND_AUTH, but BITCOIND_URL was not set."
+    fi
+
+  # Use the local bitcoind running inside the container
   else
     export BITCOIND_URL=http://127.0.0.1:$BITCOIND_RPC_PORT/
   fi
