@@ -21,12 +21,14 @@ dest=/data/fastsync/$latest_snapshot
 
 # Download
 info fastsync Downloading $age days old snapshot from https://prunednode.today/$latest_snapshot.zip
+pushd /data/fastsync > /dev/null # cd into a writable directory so wget/axel can write their log/state files
 if [ -n "$FASTSYNC_PARALLEL" ]; then
   axel --num-connections $FASTSYNC_PARALLEL -o $dest.zip -a https://prunednode.today/$latest_snapshot.zip >&2
 else
   wget --continue -q -P /data/fastsync/ https://prunednode.today/$latest_snapshot.zip --show-progress
 fi
 wget -q -P /data/fastsync/ https://prunednode.today/$latest_snapshot.signed.txt --show-progress
+popd > /dev/null
 
 # Verify
 info fastsync Verifying snapshot signature...
