@@ -17,12 +17,11 @@ export RUST_LOG_STYLE=always
 
 # Don't wait for bitcoind to finish syncing before importing addresses, to give
 # users with pruning enabled a chance to do one full scan during the IBD.
-if [ "$(jq -er .initialblockdownload <<< $bcinfo)" == true ]; then
-  export NO_WAIT_SYNC=${NO_WAIT_SYNC:-1}
-  # Incresase the gap limit to reduce the chances of transactions getting missed
-  # if too many gets processed too quickly.
-  bool_opt "$NO_WAIT_SYNC" && export GAP_LIMIT=${GAP_LIMIT:-300}
-fi
+export NO_WAIT_SYNC=${NO_WAIT_SYNC:-1}
+
+# Incresase the default gap limit to reduce the chances of transactions getting missed during
+# the IBD when too many addresses get processed in the same block, before the indexer can catch up.
+export GAP_LIMIT=${GAP_LIMIT:-300}
 
 # Enable real-time updates using unix socket notifications when bitcoind is running locally
 # Also see init.sh and https://github.com/bwt-dev/bwt#real-time-indexing
@@ -32,10 +31,9 @@ if [ "$BITCOIND_MODE" == "local" ]; then
   export POLL_INTERVAL=${POLL_INTERVAL:-90} # seconds
 fi
 
-# Disable historical rescan and merkle proofs when pruning is enabled
+# Disable historical rescan by default when pruning is enabled
 if [ "$(jq -er .pruned <<< $bcinfo)" == true ]; then
   export RESCAN_SINCE=${RESCAN_SINCE:-now}
-  export ELECTRUM_SKIP_MERKLE=${ELECTRUM_SKIP_MERKLE:-1}
 fi
 
 # Create an 'ez-bwt' wallet by default
