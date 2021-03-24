@@ -2,7 +2,7 @@
 set -xeo pipefail
 export DOCKER_CLI_EXPERIMENTAL=enabled
 
-docker_name=shesek/eznode # FIXME
+docker_name=eznode/eznode
 version=${1:?"Usage: $0 <version>"}
 
 cd "$(dirname "$0")/.."
@@ -39,8 +39,7 @@ echo -e "Releasing eznode v$version\n\n$changelog\n\n"
 if [ -z "$SKIP_BUILD" ]; then
   echo -n > SHA256SUMS
   #build_variant $version latest bitcoind,btc-rpc-explorer
-  # FIXME latestx -> latest
-  build_variant $version latestx bitcoind,bwt,btc-rpc-explorer,specter,tor,nginx,letsencrypt,dropbear
+  build_variant $version latest bitcoind,bwt,btc-rpc-explorer,specter,tor,nginx,letsencrypt,dropbear
   #build_variant $version-local local bitcoind,bwt,specter,btc-rpc-explorer
   #build_variant $version-minimal minimal bitcoind,bwt
 
