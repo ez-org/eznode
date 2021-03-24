@@ -28,4 +28,4 @@ done
 echo -e '#!/bin/sh\nexec "$@"' > /ez/bin/ez && chmod +x /ez/bin/ez
 
 apt-get autoremove --purge -y && apt-get clean
-rm -rf /var/lib/apt/lists/* /var/cache/* /usr/local/share/{fonts,man} /usr/share/{fonts,doc}
+rm -rf /var/lib/apt/lists/* /var/cache/* /usr/share/doc
