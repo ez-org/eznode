@@ -22,8 +22,10 @@ mv $HOME/node-* $HOME/node && chown -R btcexp $HOME/node
 # Install btc-rpc-explorer
 #wget -qO /tmp/btcexp.tar.gz https://github.com/janoside/btc-rpc-explorer/archive/$BTCEXP_COMMIT.tar.gz
 #echo "$BTCEXP_SHA256 /tmp/btcexp.tar.gz" | sha256sum -c -
-wget -qO /tmp/btcexp.tar.gz https://github.com/shesek/btc-rpc-explorer/archive/133ff397c39eef86185cc66ea1a9fa64567fb824.tar.gz
-echo "e0aa7497682dc626e0d10f429916e882162fdbce94efff02a88a0ebdce19e8f0 /tmp/btcexp.tar.gz" | sha256sum -c -
+
+# Use fork, pending https://github.com/janoside/btc-rpc-explorer/pull/297
+wget -qO /tmp/btcexp.tar.gz https://github.com/shesek/btc-rpc-explorer/archive/d0cfd7a7d9fb6d133d839011f7abd5c10bcb9d7e.tar.gz
+echo "4c980d9fcc6a9e44ece9442a2a8cc02a1c1a62ebe7b57ffa62321e657aa3583b /tmp/btcexp.tar.gz" | sha256sum -c -
 
 # Trim js code down from 69MB to 3.3MB by bundling the entire tree into a single minified .js file.
 # This doesn't work for native libraries, but not having them appears to be acceptable.
