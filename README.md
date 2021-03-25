@@ -1,11 +1,11 @@
-![eznode](https://raw.githubusercontent.com/shesek/eee/master/docs/img/header.png)
+![eznode](https://raw.githubusercontent.com/ez-org/eznode/master/docs/img/header.png)
 
 # 𝚎𝚣𝚗𝚘𝚍𝚎
 
-[![Build Status](https://travis-ci.org/shesek/eee.svg?branch=master)](https://travis-ci.org/shesek/eee)
-[![Latest release](https://img.shields.io/github/v/tag/shesek/eee?label=version&color=orange)](https://github.com/ez-org/eznode/releases/latest)
+[![Build Status](https://travis-ci.org/ez-org/eznode.svg?branch=master)](https://travis-ci.org/ez-org/eznode)
+[![Latest release](https://img.shields.io/github/v/tag/ez-org/eznode?label=version&color=orange)](https://github.com/ez-org/eznode/releases/latest)
 [![Docker pulls](https://img.shields.io/docker/pulls/eznode/eznode.svg?color=blueviolet)](https://hub.docker.com/r/eznode/eznode)
-[![MIT license](https://img.shields.io/github/license/bwt-dev/bwt.svg?color=yellow)](https://github.com/ez-org/eznode/blob/master/LICENSE)
+[![MIT license](https://img.shields.io/github/license/ez-org/eznode.svg?color=yellow)](https://github.com/ez-org/eznode/blob/master/LICENSE)
 [![Chat on Telegram](https://img.shields.io/badge/chat-on%20telegram-blue)](https://t.me/ez_node)
 [![Chat on IRC](https://img.shields.io/badge/chat-on%20IRC-green.svg)](https://webchat.freenode.net/#eznode)
 
