@@ -19,3 +19,6 @@ mv /tmp/$distname/bwt /usr/local/bin
 
 # Install utitilies
 mv bin/* /ez/bin/
+
+# Symlink config directory to mark it for backup
+ln -s /data/bwt /important/
