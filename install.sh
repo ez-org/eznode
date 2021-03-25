@@ -12,8 +12,6 @@ ln -s /data/config /important
 install() {
   local name=$1
   (cd $name && ./install.sh)
-  [ -f $name/finish ] || ln -s /ez/default-finish.sh $name/finish
-  [ -f $name/notification-fd ] || echo 5 > $name/notification-fd
   [ -f $name/fix-attrs ] && mv $name/fix-attrs /etc/fix-attrs.d/$name
   [ -f $name/run ] && mv $name /etc/services.d/
   true

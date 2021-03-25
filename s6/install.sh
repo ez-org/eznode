@@ -18,8 +18,13 @@ done
 # Display which services are in the process of shutting down
 mv shutdown-status.sh /etc/cont-finish.d/
 
+# Hook into init-stage2 to make some modifications right before the services are started up
+# This makes it easier to work with service directories that are mounted from the host.
+mv prepare-services.sh /ez/
+sed -ri '/s6-svscanctl -a/i if { /ez/prepare-services.sh }' /etc/s6/init/init-stage2
+
 # Make the init-stage2 and init-stage3 scripts less verbose
-sed -ri.bk '/"\[(s6-init|cont-finish\.d|fix-attrs\.d|cont-init\.d|services\.d|cmd)\] | "exited \$\{\?\}\." /d' \
+sed -ri '/"\[(s6-init|cont-finish\.d|fix-attrs\.d|cont-init\.d|services\.d|cmd)\] | "exited \$\{\?\}\." /d' \
   /etc/s6/init/init-stage{2,3}
 
 # Keep some init-stage3 [s6-finish] log messages, but change their prefix
