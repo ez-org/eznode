@@ -50,7 +50,7 @@ source /ez/networking.sh
 
 # Give services an opportunity to run early sanity checks and export variables
 # that'll be visible to other services across the container.
-source <(cat /etc/services.d/*/init.sh)
+source <(cat /etc/services.d/*/init)
 
 # Keep env vars to filesystem to make them available for `docker exec` commands and SSH sessions
 mkdir /var/run/s6 && s6-dumpenv /var/run/s6/container_environment

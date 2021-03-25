@@ -11,7 +11,7 @@ ln -s /data/config /important
 
 install() {
   local name=$1
-  (cd $name && ./install.sh)
+  (cd $name && ./install)
   [ -f $name/fix-attrs ] && mv $name/fix-attrs /etc/fix-attrs.d/$name
   [ -f $name/run ] && mv $name /etc/services.d/
   true

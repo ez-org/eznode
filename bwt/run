@@ -27,7 +27,7 @@ export NO_WAIT_SYNC=${NO_WAIT_SYNC:-1}
 export GAP_LIMIT=${GAP_LIMIT:-300}
 
 # Enable real-time updates using unix socket notifications when bitcoind is running locally
-# Also see init.sh and https://github.com/bwt-dev/bwt#real-time-indexing
+# Also see ./init and https://github.com/bwt-dev/bwt#real-time-indexing
 if [ "$BITCOIND_MODE" == "local" ]; then
   mkdir -p /run/bwt && chown bwt /run/bwt
   export UNIX_LISTENER_PATH=/run/bwt/notify-socket UNIX_LISTENER_MODE=511 # 777 in octal
