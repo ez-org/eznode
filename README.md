@@ -27,6 +27,8 @@ Why eznode?
 
 Support development: [⚡ lightning or ⛓️ on-chain via BTCPay](https://btcpay.shesek.info/)
 
+Website: [ezno.de](https://ezno.de)
+
 ## 🚀 Quickstart
 
 [Install Docker](https://docs.docker.com/get-docker/) (the only dependency) and start eznode with the data directory mounted to `/data`:
@@ -62,6 +64,12 @@ The full user guide is available at https://ezno.de.
 - [🔧 Node management](https://ezno.de/node-management)
 - [🔏 Signed images](https://ezno.de/signed-images)
 - [🏗️ Building locally](https://ezno.de/building)
+
+## ❤️ Contributing
+
+Contributions are welcome!
+
+eznode manages services using the (fantastic!) [`s6`](https://skarnet.org/software/s6/) init/supervision system (via [`s6-overlay`](https://github.com/just-containers/s6-overlay)). Refer to [`specter`](https://github.com/ez-org/eznode/tree/master/specter) for an example of a simple service package and to the s6 docs for more information on writing services.
 
 ## 📃 License
 
