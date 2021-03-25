@@ -39,7 +39,7 @@ fi
 ! bool_opt "$BITCOIND_TOR" || bool_opt "$TOR" || error bitcoind BITCOIND_TOR requires TOR to be enabled
 
 BITCOIND_OPTS="$BITCOIND_OPTS -datadir=$BITCOIND_DIR -chain=$BITCOIND_CHAIN
-  -prune="$PRUNE" -listen="$BITCOIND_LISTEN"
+  -prune="$PRUNE" -listen="$BITCOIND_LISTEN" -maxtipage=10800
   $([ -n "$TXINDEX" ] && echo "-txindex=$TXINDEX")
   $([ "$NETWORK" == "regtest" ] && echo "-fallbackfee=0.00001")
   $(bool_opt "$BITCOIND_TOR" && echo "-proxy=127.0.0.1:9050")
