@@ -21,7 +21,8 @@ export LANG=C.UTF-8
 # Update JSON config files with the Bitcoin Core RPC details
 IFS=':' read host port <<< $(cut -d'/' -f3 <<< $BITCOIND_URL)
 cat <<< $(jq --arg dir "$BITCOIND_DIR" --arg host "$host" --arg port "$port" --arg user "$BITCOIND_AUTH_USER" --arg pass "$BITCOIND_AUTH_PASS" \
-          '.rpc.datadir=$dir | .rpc.host=$host | .rpc.port=$port | .rpc.user=$user | .rpc.password=$pass' /data/specter/config.json) \
+          '.rpc.datadir=$dir | .rpc.host=$host | .rpc.port=$port | .rpc.user=$user | .rpc.password=$pass | .rpc.autodetect=($pass == "")' \
+          /data/specter/config.json) \
   > /data/specter/config.json
 
 # Use AUTH_TOKEN as the admin password
