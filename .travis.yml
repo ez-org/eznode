@@ -35,7 +35,7 @@ script: |
     echo ok
 
     echo Testing SSH...
-    ssh -i /tmp/ezdata/ssh-keys/client_rsa -o 'StrictHostKeyChecking no' \
+    ssh -i /tmp/ezdata/ssh-keys/client_ecdsa -o 'StrictHostKeyChecking no' \
       -fTN -L 127.0.0.1:3061:ez:3060 -p 2222 root@ez
     curl -fsS -m 2 localhost:3061/tx/$txid > /dev/null
     echo ok
