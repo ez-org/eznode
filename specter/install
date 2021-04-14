@@ -24,7 +24,7 @@ s6-setuidgid specter pip3 install --user .
 
 # Run specter to generate the default config file, with invalid arguments
 # that'll cause it to crash immediatly after creating it.
-s6-setuidgid specter python3.7 -m cryptoadvance.specter server --host ! > /dev/null 2>&1 || true
+s6-setuidgid specter python3 -m cryptoadvance.specter server --host ! > /dev/null 2>&1 || true
 [ -f ~/.specter/config.json ] || exit 1
 
 # Symlink wallets/devices config directory to mark it for backup

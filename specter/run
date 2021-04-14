@@ -43,4 +43,4 @@ fi
 # Start
 signal_readiness
 info specter Starting Specter server..
-exec python3.7 -m cryptoadvance.specter server --specter-data-folder /data/specter --host $BIND_ADDR 2>&1
+exec python3 -m cryptoadvance.specter server --specter-data-folder /data/specter --host $BIND_ADDR 2>&1
