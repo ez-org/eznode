@@ -13,6 +13,14 @@ apt-get install -yqq --no-install-recommends python3.7 libusb-1.0-0 \
   python3.7-dev python3-pip python3-setuptools build-essential libudev-dev libusb-1.0-0-dev python3-wheel \
   $([[ $(dpkg --print-architecture) == "arm"* ]] && echo libffi-dev libssl-dev)
 
+# pip needs to be updated to use the prebuilt 'cryptography' wheel (to avoid depending
+# on a Rust compiler, see https://github.com/pyca/cryptography/issues/5771)
+HOME=/root pip3 install --upgrade pip==21.1.3
+
+# babel is in Specter's requirements.txt, but has to be pre-installed manually because
+# 'setup.py' imports it.
+s6-setuidgid specter pip3 install --user babel==2.9.1
+
 # Install Specter
 wget -qO /tmp/specterd.tar.gz https://github.com/cryptoadvance/specter-desktop/archive/v$SPECTER_VERSION.tar.gz
 echo "$SPECTER_SHA256 /tmp/specterd.tar.gz" | sha256sum -c -
@@ -31,5 +39,6 @@ s6-setuidgid specter python3 -m cryptoadvance.specter server --host ! > /dev/nul
 ln -s /data/specter /important/
 
 # Cleanup
+HOME=/root pip3 uninstall -y pip
 apt-get purge -y python3.7-dev python3-pip python3-setuptools build-essential libudev-dev libusb-1.0-0-dev python3-wheel libffi-dev libssl-dev
-rm -r ~/specter-desktop-* ~/.cache
+rm -r ~/specter-desktop-* ~/.cache /root/.cache/pip

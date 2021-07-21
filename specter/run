@@ -17,13 +17,14 @@ export LC_ALL=C.UTF-8
 export LANG=C.UTF-8
 
 [ -f /data/specter/config.json ] || cp ~/.specter/config.json /data/specter/
+[ -d /data/specter/nodes ] || cp -r ~/.specter/nodes /data/specter/
 
-# Update JSON config files with the Bitcoin Core RPC details
+# Update JSON config file with the Bitcoin Core RPC details
 IFS=':' read host port <<< $(cut -d'/' -f3 <<< $BITCOIND_URL)
 cat <<< $(jq --arg dir "$BITCOIND_DIR" --arg host "$host" --arg port "$port" --arg user "$BITCOIND_AUTH_USER" --arg pass "$BITCOIND_AUTH_PASS" \
-          '.rpc.datadir=$dir | .rpc.host=$host | .rpc.port=$port | .rpc.user=$user | .rpc.password=$pass | .rpc.autodetect=($pass == "")' \
-          /data/specter/config.json) \
-  > /data/specter/config.json
+          '.datadir=$dir | .host=$host | .port=$port | .user=$user | .password=$pass | .autodetect=($pass == "")' \
+          /data/specter/nodes/default.json) \
+  > /data/specter/nodes/default.json
 
 # Use AUTH_TOKEN as the admin password
 if [ -n "$AUTH_TOKEN" ]; then
@@ -38,6 +39,7 @@ fi
 (bool_opt "$SPECTER_LOGS" || pidfile /tmp/specter-tldr.pid timeout 20s \
   tail -F -n0 /var/log/specter/current 2> /dev/null \
   | sed -unr '/Error/Ip; /\* Running on/{s/.*\* |\(.*//g;p;q}' \
+  | grep -v 'Failed to connect to Tor control' \
   | { while read m; do info specter $m; done; killpidf /tmp/specter-tldr.pid; } &) 1>&2
 
 # Start
