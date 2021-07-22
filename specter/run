@@ -33,6 +33,9 @@ if [ -n "$AUTH_TOKEN" ]; then
     > /data/specter/users.json
   cat <<< $(jq '.auth.method="passwordonly"' /data/specter/config.json) \
     > /data/specter/config.json
+else
+  cat <<< $(jq '.auth.method="none"' /data/specter/config.json) \
+    > /data/specter/config.json
 fi
 
 # Display some important log messages only when SPECTER_LOGS is disabled
