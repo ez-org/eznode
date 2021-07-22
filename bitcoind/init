@@ -29,6 +29,10 @@ bitcoind_chain() {
   esac
 }
 
+# Some sanity checks
+[ -n "$PRUNE_UNTIL" ] && ! bool_opt "$BWT" && error bitcoind The PRUNE_UNTIL option is managed by BWT, which is disabled.
+[ -n "$FASTSYNC_PARALLEL" ] && ! bool_opt "$TRUSTED_FASTSYNC" && error bitcoind FASTSYNC_PARALLEL was configured but TRUSTED_FASTSYNC is not enabled
+
 # Run a local Bitcoin Core instance if no BITCOIND_URL/BITCOIND_AUTH was provided and /bitcoin was not mounted
 export BITCOIND_MODE=$(([ -z "$BITCOIND_URL" ] && [ -z "$BITCOIND_AUTH" ] && [ ! -d /bitcoin ]) && echo local || echo remote)
 
@@ -77,7 +81,3 @@ if [ -z "$BITCOIND_URL" ]; then
     export BITCOIND_URL=http://127.0.0.1:$BITCOIND_RPC_PORT/
   fi
 fi
-
-# Sanity checks
-[ -n "$PRUNE_UNTIL" ] && ! bool_opt "$BWT" && error bitcoind The PRUNE_UNTIL option is managed by BWT, which is disabled.
-[ -n "$FASTSYNC_PARALLEL" ] && ! bool_opt "$TRUSTED_FASTSYNC" && error bitcoind FASTSYNC_PARALLEL was configured but TRUSTED_FASTSYNC is not enabled
