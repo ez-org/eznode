@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- New installation wizard TUI
+
 - Update Bitcoin Core to v0.21.1
 
 - Update Specter Desktop to v1.5.0

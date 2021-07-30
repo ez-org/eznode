@@ -7,6 +7,17 @@ export S6_KEEP_ENV=1
 export S6_SERVICES_GRACETIME=2700000 # 45 minutes, to allow Bitcoin Core to shutdown cleanly
 export S6_KILL_FINISH_MAXTIME=$S6_SERVICES_GRACETIME # for the shutdown-status script
 
+# Detect host OS
+export HOST_OS=$(uname -r | grep -Eq -- '-(moby|linuxkit)' && echo macOS \
+      || (uname -r | grep -Eq -- '-microsoft' && echo Windows \
+      || echo Linux))
+
+# Installation wizard
+if [ "$1" == wizard ]; then
+  /ez/wizard/wizard
+  shift
+fi
+
 # Load config options from file
 # `set -a` exports all defined variables without requiring an explicit `export`
 if [ -f /data/config ]; then set -a; source /data/config; set +a

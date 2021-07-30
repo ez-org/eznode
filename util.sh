@@ -74,9 +74,11 @@ restart_with() {
 }
 
 BOLD=$(echo -en '\e[1m')
+UNDER=$(echo -en '\e[4m')
+UNDER_R=$(echo -en '\e[24m')
 RED=$(echo -en '\e[31m')
 GREEN=$(echo -en '\e[32m')
-#LGREEN=$(echo -en '\e[92m')
+LGREEN=$(echo -en '\e[92m')
 YELLOW=$(echo -en '\e[33m')
 #LYELLOW=$(echo -en '\e[93m')
 ORANGE=$(echo -en '\e[0;33m')

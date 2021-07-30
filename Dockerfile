@@ -5,7 +5,7 @@ FROM $BASE_IMAGE
 # See the 'docker' directory for arm32v7/arm64v8
 
 # Build settings
-ARG INSTALL=bitcoind,bwt,btc-rpc-explorer,specter,tor,nginx,letsencrypt,dropbear
+ARG INSTALL=bitcoind,bwt,btc-rpc-explorer,specter,tor,nginx,letsencrypt,dropbear,wizard
 ARG DEV
 
 ARG BWT_VERSION=0.2.4

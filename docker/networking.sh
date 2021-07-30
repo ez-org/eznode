@@ -1,18 +1,13 @@
 # -- expected to be `source`ed
 
-# Detect host OS. Docker on macOS/Widows behaves differently:
-# https://docs.docker.com/docker-for-mac/networking/#known-limitations-use-cases-and-workarounds
-# https://docs.docker.com/docker-for-windows/networking/#known-limitations-use-cases-and-workarounds
-HOST_OS=$(uname -r | grep -Eq -- '-(moby|linuxkit)' && echo macOS \
-      || (uname -r | grep -Eq -- '-microsoft' && echo Windows \
-      || echo Linux))
-
 # Detect Docker's networking mode and determine the address to bind on
 if [ -z "$BIND_ADDR" ]; then
   addrs=$(hostname -I)
   
   # macOS/windows doesn't support host networking mode and doesn't allow accessing
   # the container by its virtual IP address, so we can just bind on 0.0.0.0.
+  # https://docs.docker.com/docker-for-mac/networking/#known-limitations-use-cases-and-workarounds
+  # https://docs.docker.com/docker-for-windows/networking/#known-limitations-use-cases-and-workarounds
   if [ $HOST_OS != Linux ]; then
     export BIND_ADDR=0.0.0.0
 
