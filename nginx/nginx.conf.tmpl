@@ -54,6 +54,8 @@ http {
       auth_basic_user_file /etc/nginx/htpasswd;
     ')
 
+    absolute_redirect off;
+
     location /bwt/ {
       proxy_pass http://$BIND_ADDR:3060/;
     }
