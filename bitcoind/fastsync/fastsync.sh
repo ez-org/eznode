@@ -7,7 +7,10 @@
 [ "$PRUNE" -ge 550 ] && [ "$PRUNE" -le 1000 ] || error fastsync TRUSTED_FASTSYNC must be used with a PRUNE value between 550 and 1000
 
 if [ -d /data/bitcoin/blocks ]; then
-  info fastsync Found existing datadir at /data/bitcoin. Delete it to force a re-download of the fastsync snapshot.
+  # Warn that the TRUSTED_FASTSYNC flag is ignored if the bitcoind datadir
+  # already exists but we haven't completed a successful fast-sync.
+  [ -f /data/fastsync/.done ] ||
+    warn fastsync Found existing datadir at /data/bitcoin, skipping fast-sync. Delete the directory to force a re-sync.
   return 0
 fi
 
@@ -44,5 +47,6 @@ unzip -n $dest.zip -x bitcoin.conf -d /data/bitcoin/ \
   | pv -pte -l -s $(unzip -Z -1 $dest.zip | wc -l) > /dev/null
 
 [ -n "$FASTSYNC_KEEP_SNAPSHOT" ] || rm $dest.zip
+touch /data/fastsync/.done
 
 info fastsync Ready to go!
