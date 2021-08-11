@@ -15,7 +15,7 @@ Docker-based single-container package featuring:
 * **Electrum Server:** Personal Electrum server powered by BWT
 * **BTC RPC Explorer:** Personal block explorer and node dashboard
 * **Specter Desktop:** Wallet GUI for hardware and multi-sig setups
-* **Secure remote access** using Tor Onion SSH tunnels or SSL
+* **Secure remote access** using Tor Onion, SSH tunnels or SSL
 
 Why eznode?
 
