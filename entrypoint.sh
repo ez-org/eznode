@@ -42,7 +42,7 @@ mountpoint -q /data || [ "$NETWORK" == "regtest" ] || bool_opt "$THROWAWAY" \
    || error init 'Data directory not mounted. Run with `-v /path/on/host:/data` to mount it, or set THROWAWAY=1 to start anyway.'$'\n'\
                  'This would mean that no data will get persisted, including the bitcoind data files, SSH keys, SSL keys/certs and Tor onion service keys.'
 
-# Cleanup previous runs
+# Cleanup leftover temporary files from previous runs
 rm -rf /tmp/*
 
 # Detect networking mode, determine the address to bind on and automatically set /ez/hosts
@@ -53,7 +53,7 @@ source /ez/networking.sh
 source <(cat /etc/services.d/*/init)
 
 # Keep env vars to filesystem to make them available for `docker exec` commands and SSH sessions
-mkdir /var/run/s6 && s6-dumpenv /var/run/s6/container_environment
+mkdir -p /var/run/s6 && s6-dumpenv /var/run/s6/container_environment
 
 # Display config options
 bool_opt "$VERBOSE" && env | grep -v '^\(HOSTNAME\|PWD\|HOME\|TERM\|SHLVL\|PATH\|_\|S6_.*\|BASH_FUNC_.*\)=\|^[ }]\|^$' \
