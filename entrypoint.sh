@@ -12,6 +12,9 @@ export HOST_OS=$(uname -r | grep -Eq -- '-(moby|linuxkit)' && echo macOS \
       || (uname -r | grep -Eq -- '-microsoft' && echo Windows \
       || echo Linux))
 
+# Check if the docker container is running with a TTY
+[ -t 1 ] && export IS_TTY=1
+
 # Installation wizard
 if [ "$1" == wizard ]; then
   /ez/wizard/wizard

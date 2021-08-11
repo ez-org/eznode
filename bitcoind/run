@@ -69,7 +69,7 @@ mkdir -p $BITCOIND_NETDIR/wallets
 ( (
   # Wait for the RPC to warm up and test connectivity
   pidfile /tmp/bitcoind-rpcwait.pid \
-    bitcoin-cli -rpcwait uptime > /dev/null # TODO timeout
+    bitcoin-cli -rpcwait uptime > /dev/null # TODO timeout https://github.com/bitcoin/bitcoin/pull/21056
   info bitcoind The Bitcoin Core RPC is ready
   chmod g+r $BITCOIND_NETDIR/.cookie
 

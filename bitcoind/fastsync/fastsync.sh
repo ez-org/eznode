@@ -24,13 +24,14 @@ dest=/data/fastsync/$latest_snapshot
 
 # Download
 info fastsync Downloading $age days old snapshot from https://prunednode.today/$latest_snapshot.zip
+progress_type=$([ -n "$IS_TTY" ] && echo bar || echo dot:mega)
 pushd /data/fastsync > /dev/null # cd into a writable directory so wget/axel can write their log/state files
 if [ -n "$FASTSYNC_PARALLEL" ]; then
   axel --num-connections $FASTSYNC_PARALLEL -o $dest.zip -a https://prunednode.today/$latest_snapshot.zip >&2
 else
-  wget --continue -q -P /data/fastsync/ https://prunednode.today/$latest_snapshot.zip --show-progress
+  wget --continue -q -P /data/fastsync/ https://prunednode.today/$latest_snapshot.zip --show-progress --progress=$progress_type
 fi
-wget -q -P /data/fastsync/ https://prunednode.today/$latest_snapshot.signed.txt --show-progress
+wget -q -P /data/fastsync/ https://prunednode.today/$latest_snapshot.signed.txt --show-progress --progress=$progress_type
 popd > /dev/null
 
 # Verify
