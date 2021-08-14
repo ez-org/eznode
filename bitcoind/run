@@ -75,7 +75,7 @@ mkdir -p $BITCOIND_NETDIR/wallets
 
   if [ "$NETWORK" == "regtest" ] && [ "$(bitcoin-cli getblockcount)" -eq 0 ]; then
     info bitcoind Mining some regtest blocks
-    bitcoin-cli createwallet miner > /dev/null
+    bitcoin-cli loadwallet miner &> /dev/null || bitcoin-cli createwallet miner > /dev/null
     bitcoin-cli generatetoaddress 101 $(bitcoin-cli -rpcwallet=miner getnewaddress) > /dev/null
   fi
 
