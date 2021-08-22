@@ -14,6 +14,8 @@ Package updates:
 
 Fixes:
 
+- Fix networking mode detection in Podman
+
 - bwt: Fix log output buffering
 
 - nginx: Fix relative redirect URLs

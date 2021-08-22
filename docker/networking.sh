@@ -2,7 +2,7 @@
 
 # Detect Docker's networking mode and determine the address to bind on
 if [ -z "$BIND_ADDR" ]; then
-  addrs=$(hostname -I)
+  addrs=$(hostname -I | sed 's/ $//')
   
   # macOS/windows doesn't support host networking mode and doesn't allow accessing
   # the container by its virtual IP address, so we can just bind on 0.0.0.0.
@@ -11,21 +11,20 @@ if [ -z "$BIND_ADDR" ]; then
   if [ $HOST_OS != Linux ]; then
     export BIND_ADDR=0.0.0.0
 
-  # In a virtual docker network env, our hostname will resolve to a single IP
-  # address in the 172.x.x.x range (there will typically be multiple on the host).
-  # Bind on it explicitly instead of using 0.0.0.0 to make the services
-  # URLs/URIs shown to the user easily accessible from the host.
-  elif grep -Eq '^172\.\S+ ' <<< $addrs; then
-    export BIND_ADDR=${addrs/ /}
-
-  # Bind on 127.0.0.1 in host networking mode, as a safety precaution.
-  else
+  # Detect host networking mode and bind on 127.0.0.1, as a safety precaution.
+  # If our hostname resolves to multiple IP addresses, assume we're running in host networking. This will
+  # will typically be the case in the host environment, and never the case with Docker's virtual networking.
+  # This check can have false negatives (rarely, hopefully).
+  elif [[ $addrs ==  *" "* ]]; then
     export BIND_ADDR=127.0.0.1
     warn networking "You appear to be running in docker host networking mode (--net host)." \
               "Services will be bound on 127.0.0.1 by default, to prevent them from accidentally being left exposed to the world." \
               "Set BIND_ADDR=0.0.0.0 if you'd like to accept remote connections."
-    # This could be a false positive, if the user reconfigured docker's IP range.
-    # I couldn't find a more reliable way to do this.
+
+  # Bind on the virtual network IP address explicitly instead of using 0.0.0.0, to
+  # make the services URLs/URIs shown to the user easily accessible from the host.
+  else
+    export BIND_ADDR=$addrs
   fi
 fi
 
