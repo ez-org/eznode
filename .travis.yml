@@ -1,5 +1,0 @@
-before_script:
-  - docker build -t eznode-test .
-
-script:
-  - ./test.sh eznode-test

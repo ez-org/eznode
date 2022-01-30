@@ -2,7 +2,7 @@
 
 # 𝚎𝚣𝚗𝚘𝚍𝚎
 
-[![Build Status](https://travis-ci.org/ez-org/eznode.svg?branch=master)](https://travis-ci.org/ez-org/eznode)
+[![Build Status](https://github.com/ez-org/eznode/actions/workflows/test.yaml/badge.svg)](https://github.com/ez-org/eznode/actions/workflows/test.yaml)
 [![Latest release](https://img.shields.io/github/v/tag/ez-org/eznode?label=version&color=orange)](https://github.com/ez-org/eznode/releases/latest)
 [![Docker pulls](https://img.shields.io/docker/pulls/eznode/eznode.svg?color=blueviolet)](https://hub.docker.com/r/eznode/eznode)
 [![MIT license](https://img.shields.io/github/license/ez-org/eznode.svg?color=yellow)](https://github.com/ez-org/eznode/blob/master/LICENSE)
