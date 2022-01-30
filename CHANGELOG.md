@@ -8,7 +8,7 @@ Package updates:
 
 - ₿ Bitcoin Core v22.0
 
-- 👻 Specter Desktop v1.5.0
+- 👻 Specter Desktop v1.8.0
 
 - 🗺️ BTC RPC Explorer v3.3.0
 

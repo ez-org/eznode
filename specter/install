@@ -15,7 +15,7 @@ apt-get install -yqq --no-install-recommends python3.7 libusb-1.0-0 \
 
 # pip needs to be updated to use the prebuilt 'cryptography' wheel (to avoid depending
 # on a Rust compiler, see https://github.com/pyca/cryptography/issues/5771)
-HOME=/root pip3 install --upgrade pip==21.1.3
+HOME=/root pip3 install --upgrade pip==21.3.1
 
 # babel is in Specter's requirements.txt, but has to be pre-installed manually because
 # 'setup.py' imports it.
@@ -23,7 +23,7 @@ s6-setuidgid specter pip3 install --user babel==2.9.1
 
 # ARM7 doesn't have pre-built wheels for the python 'cryptography' lib, whuch
 # normally requires Rust, which does not work properly in an emulated ARM 7
-# envirnoment. The flag below is a temporary workaround which is expected to
+# environment. The flag below is a temporary workaround which is expected to
 # become unavailable in the next minor cryptography release (v3.5)
 # https://github.com/pyca/cryptography/issues/5771
 # https://github.com/rust-lang/cargo/issues/8719
@@ -31,16 +31,13 @@ s6-setuidgid specter pip3 install --user babel==2.9.1
   export CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 # Install Specter
-wget -qO /tmp/specterd.tar.gz https://github.com/cryptoadvance/specter-desktop/archive/v$SPECTER_VERSION.tar.gz
+wget -qO /tmp/specterd.tar.gz https://github.com/cryptoadvance/specter-desktop/releases/download/v$SPECTER_VERSION/cryptoadvance.specter-$SPECTER_VERSION.tar.gz
 echo "$SPECTER_SHA256 /tmp/specterd.tar.gz" | sha256sum -c -
-tar xf /tmp/specterd.tar.gz -C ~
-cd ~/specter-desktop-*
 
-sed -i "s/vx.y.z-get-replaced-by-release-script/$SPECTER_VERSION/g; " setup.py
-s6-setuidgid specter pip3 install --user .
+s6-setuidgid specter pip3 install --user /tmp/specterd.tar.gz
 
 # Run specter to generate the default config file, with invalid arguments
-# that'll cause it to crash immediatly after creating it.
+# that'll cause it to crash immediately after creating it.
 s6-setuidgid specter python3 -m cryptoadvance.specter server --host ! > /dev/null 2>&1 || true
 [ -f ~/.specter/config.json ] || exit 1
 
@@ -50,4 +47,4 @@ ln -s /data/specter /important/
 # Cleanup
 HOME=/root pip3 uninstall -y pip
 apt-get purge -y python3.7-dev python3-pip python3-setuptools build-essential libudev-dev libusb-1.0-0-dev python3-wheel libffi-dev libssl-dev
-rm -r ~/specter-desktop-* ~/.cache /root/.cache/pip
+rm -r ~/.cache /root/.cache/pip
