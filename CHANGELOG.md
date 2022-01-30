@@ -6,7 +6,7 @@
 
 Package updates:
 
-- ₿ Bitcoin Core v0.21.1
+- ₿ Bitcoin Core v22.0
 
 - 👻 Specter Desktop v1.5.0
 
