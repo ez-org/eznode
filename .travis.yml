@@ -31,7 +31,7 @@ script: |
     echo ok
 
     echo Testing btc-rpc-explorer...
-    echo "$(curl -fsS ez:3002/explorer/node-status)" | grep -q '<span class="text-success">Synchronized with network</span>'
+    echo "$(curl -fsS ez:3002/explorer/node-details)" | grep -q '<span class="text-success">Synchronized</span>'
     echo ok
 
     echo Testing SSH...

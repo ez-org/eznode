@@ -10,7 +10,7 @@ Package updates:
 
 - 👻 Specter Desktop v1.5.0
 
-- 🗺️ BTC RPC Explorer v3.2.0
+- 🗺️ BTC RPC Explorer v3.3.0
 
 Fixes:
 

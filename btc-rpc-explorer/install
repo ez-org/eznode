@@ -37,10 +37,10 @@ s6-setuidgid btcexp bash -xeo pipefail << 'PRIV'
 
   mkdir ~/dist ~/dist/bin
   cd $HOME/node/lib/node_modules/btc-rpc-explorer
-  (cd bin && browserify --node -r jstransformer-markdown-it -x v8 -x node-bitcoin-script -x async_hooks -x hiredis -x event-loop-stats \
+  (cd bin && browserify --node -r jstransformer-markdown-it -x v8 -x node-bitcoin-script -x async_hooks -x hiredis -x event-loop-stats -x supports-color \
     ./www | fix_pug | terser -c -m reserved=['RpcError'] > ~/dist/bin/www)
   rm -r public/img/screenshots
-  mv views public CHANGELOG.md ~/dist/
+  mv views public CHANGELOG.md CHANGELOG-API.md ~/dist/
 PRIV
 
 # Cleanup
