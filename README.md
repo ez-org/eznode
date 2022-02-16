@@ -20,7 +20,7 @@ Docker-based single-container package featuring:
 Why eznode?
 
 * Simple one command setup
-* Lightweight (120 MB docker image)
+* Lightweight (130 MB docker image)
 * Pruning-friendly (requires <5GB of storage)
 * Suitable for a dedicated box, but doesn't require one
 * Supports Linux, macOS, Windows and ARMv7/v8
@@ -41,15 +41,18 @@ This will setup a pruned Bitcoin Core full node, a personal Electrum server trac
 
 You can skip setting an `XPUB` if you're not using the [Electrum server](https://ezno.de/packages#bitcoin-wallet-tracker).
 
-Change `~/eznode` if you'd like to store the node's data files elsewhere. On Windows, you can use `$env:AppData\eznode` to store them in `C:\Users\<USER>\AppData\Roaming`. They require \~4.8GB of free space.
+Change `~/eznode` if you'd like to store the node's data files elsewhere (for example `C:\eznode` on Windows).
+They require \~4.8GB of free space.
 
 On Windows/macOS, you'll need to [publish the ports with `-p`](https://ezno.de/accessing#connecting-locally) to access them locally.
 
-Set `TRUSTED_FASTSYNC=1` to enable the [_trusted_ fast-sync](https://ezno.de/packages#fast-sync) mode. You should carefully consider the implications and avoid this if possible.
+Some other common options include: `AUTH_TOKEN=<password>` to enable [authentication](accessing#authentication), `NETWORK=signet` to experiment on signet, `SPECTER=1` to enable [Specter Desktop](package#specter-desktop) and `TRUSTED_FASTSYNC=1` to enable the the [_trusted_ fast-sync](packages#fast-sync) mode.
 
-To enable Specter Desktop, set `SPECTER=1`.
+To setup eznode using the [🧙 installation wizard](https://ezno.de/getting-started#installation-wizard), run:
 
-To experiment on signet, set `NETWORK=signet`.
+```bash
+docker run -it --rm --name ez -v ~/eznode:/data eznode/eznode wizard
+```
 
 Signature verification instructions [are available here](https://ezno.de/signed-images).
 

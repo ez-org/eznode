@@ -4,6 +4,10 @@
 
 - New installation wizard TUI! 🧙
 
+- Support for Podman and Rootless containers
+
+- Switch nginx/dropbear to use EC keys (RSA keys generated with prior versions still work)
+
 Package updates:
 
 - ₿ Bitcoin Core v22.0
